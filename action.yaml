@@ -1,0 +1,35 @@
+# action.yml
+name: 'Get Envs'
+description: 'Returns environmental variables for GH workflows from Helm files.'
+inputs:
+  application_environment:  #development, staging, or production
+    description: 'Deployment environment: development, staging, or production.'
+    required: true
+  chart_yaml:
+    description: 'Content of Chart.yaml file.'
+    required: true
+  values_yaml:
+    description: 'Content of values.yaml file.'
+    required: true
+outputs:
+    application_name:
+      description: 'Application name from charts.yaml.'
+    configmap:
+      description: 'Application K8s Configmap name.'
+    configsecret:
+      description: 'Application K8s Config Secret name.'
+    ingress:
+      description: 'Kubernetes Ingress hostname for application.'
+    domainname:
+      description: 'DNS Domain name for application.'
+    hostname:
+      description: 'DNS hostname for application.'
+    image_pull_secret:
+      description: 'Image pull secret name for application.'
+    
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.application_environment }}
+    - ${{ inputs.charts_path }}
