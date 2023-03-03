@@ -1,4 +1,4 @@
-name: Cache Env Vars
+name: Cache Envs from Azure KeyVault
 
 description: Generates and caches a env file
 
