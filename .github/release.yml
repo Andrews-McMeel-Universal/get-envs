@@ -1,0 +1,8 @@
+changelog:
+  categories:
+    - title: General Changes
+      labels:
+        - "*"
+    - title: Documentation
+      labels:
+        - documentation
