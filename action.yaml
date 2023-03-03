@@ -5,8 +5,10 @@ description: Generates and caches a env file
 inputs:
   azurecredentials:
     description: 'Credentials to login to Azure'
-    required: false
-    
+    required: true
+branding:
+  color: purple
+  icon: unlock
 runs:
   using: 'composite'
   steps:
