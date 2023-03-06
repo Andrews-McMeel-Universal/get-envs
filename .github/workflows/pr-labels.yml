@@ -2,16 +2,13 @@ name: Add PR Labels
 
 on:
   pull_request:
-  workflow_call:
-    secrets:
-      PAT_ACTION_CI:
-        required: true
+    types: [opened, synchronize, reopened]
+    branches: [main, development]
 
 jobs:
   # Automatically apply labels that match globs, defined in .github/labeler.yml
   # https://github.com/marketplace/actions/labeler
   triage-labels:
-    name: Apply labels
     permissions:
       contents: read
       pull-requests: write
@@ -19,16 +16,17 @@ jobs:
     steps:
       - uses: actions/labeler@v4
         with:
-          repo-token: ${{ secrets.PAT_ACTION_CI }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
           sync-labels: true
 
   # Prevent merging if certain labels exist
   # https://github.com/marketplace/actions/require-labels
   check-required-labels:
-    name: Check for "do not merge" label
     runs-on: ubuntu-latest
     steps:
       - uses: mheap/github-action-required-labels@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           mode: exactly
           count: 0

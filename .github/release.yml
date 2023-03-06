@@ -3,6 +3,13 @@ changelog:
     - title: General Changes
       labels:
         - "*"
+      exclude:
+        labels:
+          - dependencies
+          - documentation
     - title: Documentation
       labels:
         - documentation
+    - title: Dependency Changes
+      labels:
+        - dependencies

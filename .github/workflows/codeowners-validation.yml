@@ -1,16 +1,20 @@
 name: Validate Codeowners File
 
 on:
-  workflow_call:
-  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, development]
+    paths:
+      - ".github/CODEOWNERS"
+      - ".github/workflows/codeowners-validation.yml"
+  workflow_dispatch: {}
 
 jobs:
   codeowners-validation:
-    name: Codeowners File Validation
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 1

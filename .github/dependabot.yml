@@ -6,11 +6,13 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directory: ".github"
     schedule:
       interval: "weekly"
+      day: "monday"
     labels:
       - "devops"
       - "dependencies"
     reviewers:
       - "Andrews-McMeel-Universal/devops-engineers"
+    open-pull-requests-limit: 10
