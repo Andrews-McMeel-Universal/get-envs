@@ -11,20 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.PAT_ACTION_CI }}
+        uses: actions/checkout@v2 # Check out the repository first.
 
       - uses: actionsx/prettier@v2
         with:
           # prettier CLI arguments.
-          args: --write .
-
-      - uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_user_name: amutechtest
-          commit_user_email: amu_deploy@amuniversal.com
-          commit_message: Apply prettier changes
+          args: --check .
 
   lint-workflows:
     name: Workflow linter
