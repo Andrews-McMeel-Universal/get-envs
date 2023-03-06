@@ -6,4 +6,4 @@ _A summary of the changes_
 
 _relevant links_
 
-- Jira Issue: DEVOPS-<num>
+- Jira Issue: PROJECT-<num>

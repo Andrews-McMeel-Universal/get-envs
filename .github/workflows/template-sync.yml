@@ -1,8 +1,8 @@
-name: 'action_template Sync'
+name: ".github Sync"
 
 on:
   schedule:
-  - cron:  "0 9 * * 1"
+    - cron: "0 9 * * 1"
   workflow_dispatch:
 
 jobs:
@@ -19,9 +19,9 @@ jobs:
         uses: AndreasAugustin/actions-template-sync@v0.7.3
         with:
           github_token: ${{ secrets.PAT_ACTION_CI }}
-          source_repo_path: Andrews-McMeel-Universal/action_template
+          source_repo_path: Andrews-McMeel-Universal/.github
           upstream_branch: main
           pr_labels: maintenance
-          pr_commit_msg: Synchronize with @Andrews-McMeel-Universal/action_template
-          pr_title: Sync with @Andrews-McMeel-Universal/action_template
-          pr_branch_name_prefix: sync/action_template/
+          pr_commit_msg: Synchronize with @Andrews-McMeel-Universal/.github
+          pr_title: Sync with @Andrews-McMeel-Universal/.github
+          pr_branch_name_prefix: sync/dotgithub/

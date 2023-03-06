@@ -1,0 +1,35 @@
+name: Lint and Format Code
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, development]
+
+jobs:
+  prettier:
+    name: Prettier Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2 # Check out the repository first.
+
+      - uses: actionsx/prettier@v2
+        with:
+          # prettier CLI arguments.
+          args: --check .
+
+  lint-workflows:
+    name: Workflow linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download actionlint
+        id: get_actionlint
+        run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+        shell: bash
+
+      - name: Lint workflow files
+        run: ${{ steps.get_actionlint.outputs.executable }} -color -ignore "SC2086" -ignore "SC2129"
+        shell: bash
