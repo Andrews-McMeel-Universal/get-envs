@@ -9,6 +9,8 @@ jobs:
   lint-and-format:
     name: Lint and Format
     uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/lint-and-format.yaml@2.2.2
+    secrets:
+      PAT_ACTION_CI: ${{ secrets.PAT_ACTION_CI }}
 
   pr-labels:
     name: PR Labels
