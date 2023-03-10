@@ -8,16 +8,16 @@ on:
 jobs:
   lint-and-format:
     name: Lint and Format
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/lint-and-format.yaml@2.2.2
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/lint-and-format.yaml@2.2.4
     secrets:
       PAT_ACTION_CI: ${{ secrets.PAT_ACTION_CI }}
 
   pr-labels:
     name: PR Labels
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/pr-labels.yaml@2.2.2
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/pr-labels.yaml@2.2.4
     secrets:
       PAT_ACTION_CI: ${{ secrets.PAT_ACTION_CI }}
 
   codeowners-validation:
     name: Codeowners File Validation
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/codeowners-validation.yaml@2.2.2
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/codeowners-validation.yaml@2.2.4
