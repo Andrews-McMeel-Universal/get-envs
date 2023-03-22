@@ -14,7 +14,7 @@ inputs:
     description: "GitHub Repository Name."
     default: ${{ github.event.repository.name }}
   environment:
-    required: true
+    required: false
     description: "Deployment environment"
   
 branding:
