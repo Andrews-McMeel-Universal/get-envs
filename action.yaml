@@ -6,6 +6,17 @@ inputs:
   azurecredentials:
     description: "Credentials to login to Azure"
     required: true
+  environmentKeyVault:
+    description: "Azure Key Vault Name"
+    required: false
+  repositoryName:
+    required: false
+    description: "GitHub Repository Name."
+    default: ${{ github.event.repository.name }}
+  environment:
+    required: true
+    description: "Deployment environment"
+  
 branding:
   color: purple
   icon: unlock
@@ -29,12 +40,17 @@ runs:
         creds: "${{ env.azureCredentials }}"
         enable-AzPSSession: true
 
-    - name: Pull down secrets from Azure Key Vaults
+    - name: Generate .env file from Azure Key Vaults
       if: steps.secrets-cache.outputs.cache-hit != 'true'
       uses: azure/powershell@v1.2.0
       with:
         inlineScript: |
-          $KeyVaultName = (Get-AzKeyVault -Tag @{"environment"="${{ env.environment }}"} | Get-AzKeyVault -Tag @{"repository-name"="${{ github.event.repository.name }}"}).VaultName
+          if ("${{ inputs.environmentKeyVault }}") {
+            $KeyVaultName = "${{ inputs.environmentKeyVault }}"
+          }
+          else {
+            $KeyVaultName = (Get-AzKeyVault -Tag @{"environment" = "${{ inputs.environment }}" } | Get-AzKeyVault -Tag @{"repository-name" = "${{ inputs.repositoryName }}" }).VaultName
+          }
           $envSecrets = (Get-AzKeyVaultSecret -VaultName $KeyVaultName  | Where-Object {($_.ContentType -contains 'Env') -or ($_.ContentType -contains 'BuildArg Env')}).Name
           $envSecrets | ForEach-Object {
               $envName = $_.ToUpper()
