@@ -37,7 +37,7 @@ runs:
       if: steps.secrets-cache.outputs.cache-hit != 'true'
       uses: azure/login@v1.4.7
       with:
-        creds: "${{ env.azureCredentials }}"
+        creds: "${{ inputs.azurecredentials }}"
         enable-AzPSSession: true
 
     - name: Generate .env file from Azure Key Vaults
