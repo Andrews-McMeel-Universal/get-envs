@@ -51,6 +51,7 @@ runs:
           else {
             $KeyVaultName = (Get-AzKeyVault -Tag @{"environment" = "${{ inputs.environment }}" } | Get-AzKeyVault -Tag @{"repository-name" = "${{ inputs.repositoryName }}" }).VaultName
           }
+          [String]$KeyVaultName = $KeyVaultName.Replace(" ","")
           $envSecrets = (Get-AzKeyVaultSecret -VaultName $KeyVaultName  | Where-Object {($_.ContentType -contains 'Env') -or ($_.ContentType -contains 'BuildArg Env')}).Name
           $envSecrets | ForEach-Object {
               $envName = $_.ToUpper()
