@@ -45,12 +45,16 @@ runs:
       uses: azure/powershell@v1.2.0
       with:
         inlineScript: |
+          $environment = "${{ inputs.environment }}"
+          $repositoryName = "${{ inputs.repositoryName }}"
+
           if ("${{ inputs.environmentKeyVault }}") {
             $KeyVaultName = "${{ inputs.environmentKeyVault }}"
           }
           else {
-            $KeyVaultName = (Get-AzKeyVault -Tag @{"environment" = "${{ inputs.environment }}" } | Get-AzKeyVault -Tag @{"repository-name" = "${{ inputs.repositoryName }}" }).VaultName
+            $KeyVaultName = (Get-AzKeyVault -Tag @{"environment" = "$environment" } | Get-AzKeyVault -Tag @{"repository-name" = "$repositoryName" }).VaultName
           }
+          
           [String]$KeyVaultName = $KeyVaultName.Replace(" ","")
           Write-Output "::notice::KeyVaultName: $KeyVaultName"
           $envSecrets = (Get-AzKeyVaultSecret -VaultName $KeyVaultName  | Where-Object {($_.ContentType -contains 'Env') -or ($_.ContentType -contains 'BuildArg Env')}).Name
@@ -67,7 +71,7 @@ runs:
       shell: sh
       run: |
         while read -r envVar; do
-          if [ $(echo "${envVar}" | grep -Ei "SECRET|TOKEN|KEY|PASS") ]; then
+          if [ $(echo "${envVar}" | grep -Ei "SECRET|TOKEN|KEY|PASS|CONNECTION_STRING") ]; then
             echo "::add-mask::$(echo ${envVar} | awk -F '=' '{print $2}')"
           fi
           echo "$envVar" >> $GITHUB_ENV
