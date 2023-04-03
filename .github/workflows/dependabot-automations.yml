@@ -18,7 +18,9 @@ jobs:
   dependabot-automations:
     if: ${{ github.actor == 'dependabot[bot]' }}
     name: Dependabot PR Automations
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/dependabot-automations.yaml@2.2.5
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/dependabot-automations.yaml@2.2.6
+    with:
+      autoApprove: false
 
   required-checks:
     name: Required Checks

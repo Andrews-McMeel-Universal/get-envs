@@ -3,21 +3,35 @@ name: PR Checks
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    branches: [main]
 
 jobs:
-  lint-and-format:
-    name: Lint and Format
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/lint-and-format.yaml@2.2.4
-    secrets:
-      PAT_ACTION_CI: ${{ secrets.PAT_ACTION_CI }}
-
   pr-labels:
+    if: ${{ github.actor != 'dependabot[bot]' }}
     name: PR Labels
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/pr-labels.yaml@2.2.4
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/pr-labels.yaml@2.2.6
     secrets:
       PAT_ACTION_CI: ${{ secrets.PAT_ACTION_CI }}
 
   codeowners-validation:
+    if: ${{ github.actor != 'dependabot[bot]' }}
     name: Codeowners File Validation
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/codeowners-validation.yaml@2.2.4
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/codeowners-validation.yaml@2.2.6
+
+  jira-lint:
+    if: ${{ github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/development' && github.ref != 'refs/heads/main' }}
+    name: Jira PR Linter
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/jira-lint.yaml@2.2.6
+    with:
+      fail-on-error: true
+      skip-comments: false
+    secrets:
+      JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+
+  # Required status check
+  # Checks code quality
+  lint:
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    name: Simple Lint
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/simple-lint.yaml@2.2.6
+    secrets:
+      PAT_ACTION_CI: ${{ secrets.PAT_ACTION_CI }}

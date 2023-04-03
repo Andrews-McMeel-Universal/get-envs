@@ -1,9 +1,61 @@
+dependencies:
+  - yarn.lock
+  - package.json
+  - "**/package-lock.json"
+  - Gemfile.lock
+  - Gemfile
+  - ".ruby-version"
+  - "**/*.csproj"
+  - "**/pnpm-lock.yaml"
+
+documentation:
+  - "**/*.md"
+
+front-end:
+  - "**/*.js"
+  - "**/*.js.html"
+  - "**/*.json"
+  - "**/*.jsx"
+  - "**/*.ts"
+  - "**/*.tsx"
+  - yarn.lock
+  - package.json
+  - wp-content/
+  - "!**/Secrets.json*"
+  - "!/.vscode"
+  - "!**/*.test.js"
+  - "!.github/**"
+
+back-end:
+  - "**/*.cs"
+  - "**/*.csproj"
+  - "**/*.sln"
+  - "**/**.json"
+  - "bin/"
+  - "**/*.rb"
+  - "Rakefile"
+  - "**/*.yml"
+  - "**/*.ru"
+  - "!**/Secrets.json*"
+  - "!.github/**"
+
+tools:
+  - "/.vscode"
+  - "/.devcontainer"
+
 tests:
+  - "playwright/**"
+  - "cypress/**"
+  - "**/.spec.*"
+  - "**/*.test.js"
   - ".github/workflows/workflow-linter.yaml"
   - ".github/actionlint.yaml"
 
-maintenance:
-  - "*"
-
-documentation:
-  - "README.md"
+devops:
+  - ".github/**"
+  - "deployments/**"
+  - "*.ps1"
+  - "Secrets.json*"
+  - "docker-compose.yml"
+  - "Dockerfile"
+  - ".*ignore"

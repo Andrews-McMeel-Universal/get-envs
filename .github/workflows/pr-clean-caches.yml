@@ -1,0 +1,10 @@
+name: Cleanup caches after PR is closed
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup:
+    name: Cleanup PR Caches
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/pr-clean-caches.yaml@2.2.6
