@@ -16,7 +16,7 @@ inputs:
   environment:
     required: false
     description: "Deployment environment"
-  
+
 branding:
   color: purple
   icon: unlock
@@ -54,7 +54,7 @@ runs:
           else {
             $KeyVaultName = (Get-AzKeyVault -Tag @{"environment" = "$environment" } | Get-AzKeyVault -Tag @{"repository-name" = "$repositoryName" }).VaultName
           }
-          
+
           [String]$KeyVaultName = $KeyVaultName.Replace(" ","")
           Write-Output "::notice::KeyVaultName: $KeyVaultName"
           $envSecrets = (Get-AzKeyVaultSecret -VaultName $KeyVaultName  | Where-Object {($_.ContentType -contains 'Env') -or ($_.ContentType -contains 'BuildArg Env')}).Name
