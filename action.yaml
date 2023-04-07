@@ -62,9 +62,7 @@ runs:
               $envName = $_.ToUpper().Replace("-", "_")
               $envSecret = (Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $_).secretvalue | ConvertFrom-SecureString -AsPlainText
               $envContent = $envName + "=" + $envSecret
-              if ($envName -notcontains "APPLICATIONINSIGHTS_CONNECTION_STRING") {
-                  Add-Content -Path "${{ github.workspace }}/.env" -Value $envContent
-              }
+              Add-Content -Path "${{ github.workspace }}/.env" -Value $envContent
           }
         azPSVersion: "latest"
 
