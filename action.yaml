@@ -47,14 +47,14 @@ runs:
         inlineScript: |
           $environment = "${{ inputs.environment }}"
           $repositoryName = "${{ inputs.repositoryName }}"
-          
+
           if ("${{ inputs.environmentKeyVault }}") {
               $KeyVaultName = "${{ inputs.environmentKeyVault }}"
           }
           else {
               $KeyVaultName = (Get-AzKeyVault -Tag @{"environment" = "$environment" } | Get-AzKeyVault -Tag @{"repository-name" = "$repositoryName" }).VaultName
           }
-          
+
           [String]$KeyVaultName = $KeyVaultName.Replace(" ", "")
           Write-Output "::notice::KeyVaultName: $KeyVaultName"
           $envSecrets = (Get-AzKeyVaultSecret -VaultName $KeyVaultName  | Where-Object { ($_.ContentType -contains 'Env') -or ($_.ContentType -contains 'BuildArg Env') }).Name
@@ -62,7 +62,7 @@ runs:
               $envName = $_.ToUpper().Replace("-", "_")
               $envSecret = (Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $_).secretvalue | ConvertFrom-SecureString -AsPlainText
               $envContent = $envName + "=" + $envSecret
-              if ($envName -notcontains "APPLICATIONINSIGHTS") {
+              if ($envName -notcontains "APPLICATIONINSIGHTS_CONNECTION_STRING") {
                   Add-Content -Path "${{ github.workspace }}/.env" -Value $envContent
               }
           }
