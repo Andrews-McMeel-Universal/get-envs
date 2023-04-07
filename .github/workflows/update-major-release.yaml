@@ -12,7 +12,7 @@ on:
         type: choice
         description: The major version to update
         options:
-          - "1"
+          - "v1"
 
 jobs:
   tag:
