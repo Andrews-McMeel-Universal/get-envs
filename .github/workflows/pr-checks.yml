@@ -8,19 +8,19 @@ jobs:
   pr-labels:
     if: ${{ github.actor != 'dependabot[bot]' }}
     name: PR Labels
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/pr-labels.yaml@2.2.6
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/pr-labels.yaml@2
     secrets:
       PAT_ACTION_CI: ${{ secrets.PAT_ACTION_CI }}
 
   codeowners-validation:
     if: ${{ github.actor != 'dependabot[bot]' }}
     name: Codeowners File Validation
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/codeowners-validation.yaml@2.2.6
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/codeowners-validation.yaml@2
 
   jira-lint:
-    if: ${{ github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/development' && github.ref != 'refs/heads/main' }}
+    if: ${{ github.actor != 'dependabot[bot]' && github.actor != 'amutechtest' && github.ref != 'refs/heads/development' && github.ref != 'refs/heads/main' }}
     name: Jira PR Linter
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/jira-lint.yaml@2.2.6
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/jira-lint.yaml@2
     with:
       fail-on-error: true
       skip-comments: false
@@ -32,6 +32,6 @@ jobs:
   lint:
     if: ${{ github.actor != 'dependabot[bot]' }}
     name: Simple Lint
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/simple-lint.yaml@2.2.6
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/simple-lint.yaml@2
     secrets:
       PAT_ACTION_CI: ${{ secrets.PAT_ACTION_CI }}
