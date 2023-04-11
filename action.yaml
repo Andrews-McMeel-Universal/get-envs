@@ -24,24 +24,24 @@ runs:
   using: "composite"
   steps:
     # Caches the app's environment variables, breaks cache when the Secrets.json.gpg file is updated
-    # - name: Cache Azure Key Vault Secrets
-    #   id: secrets-cache
-    #   uses: actions/cache@v3
-    #   with:
-    #     path: |
-    #       ${{ github.workspace }}/.env
-    #     key: envs-${{ inputs.environment }}-${{ hashFiles('**/*.gpg','**/*lock*') }}
+    - name: Cache Azure Key Vault Secrets
+      id: secrets-cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/.env
+        key: envs-${{ inputs.environment }}-${{ hashFiles('**/*.gpg','**/*lock*') }}
 
     # Gets the environment variables if the cache is broken
     - name: Login via Az module
-      # if: steps.secrets-cache.outputs.cache-hit != 'true'
+      if: steps.secrets-cache.outputs.cache-hit != 'true'
       uses: azure/login@v1.4.7
       with:
         creds: "${{ inputs.azurecredentials }}"
         enable-AzPSSession: true
 
     - name: Generate .env file from Azure Key Vaults
-      # if: steps.secrets-cache.outputs.cache-hit != 'true'
+      if: steps.secrets-cache.outputs.cache-hit != 'true'
       uses: azure/powershell@v1.2.0
       with:
         inlineScript: |
