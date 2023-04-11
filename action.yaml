@@ -30,7 +30,7 @@ runs:
       with:
         path: |
           ${{ github.workspace }}/.env
-        key: envs-${{ inputs.environment }}-${{ hashFiles('**/*.gpg','**/*lock*') }}
+        key: envs-${{ inputs.environment }}-${{ hashFiles('**/*.gpg') }}
 
     # Gets the environment variables if the cache is broken
     - name: Login via Az module
