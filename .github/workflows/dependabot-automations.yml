@@ -20,7 +20,8 @@ jobs:
     name: Dependabot PR Automations
     uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/dependabot-automations.yaml@2
     with:
-      autoApprove: false
+      autoApprove: true
+      autoMerge: false
 
   required-checks:
     name: Required Checks

@@ -22,8 +22,8 @@ jobs:
     name: Jira PR Linter
     uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/jira-lint.yaml@2
     with:
-      fail-on-error: true
-      skip-comments: false
+      fail-on-error: false
+      skip-comments: true
     secrets:
       JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
 

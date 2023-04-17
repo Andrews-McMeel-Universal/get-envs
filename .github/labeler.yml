@@ -18,7 +18,24 @@ front-end:
   - "**/*.jsx"
   - "**/*.ts"
   - "**/*.tsx"
-  - yarn.lock
+  - "**/*.html"
+  - "**/*.css"
+  - "**/*.less"
+  - "**/*.scss"
+  - "**/*.sass"
+  - "**/*.otf"
+  - "**/*.eot"
+  - "**/*.ttf"
+  - "**/*.woff*"
+  - "**/*.svg"
+  - "**/*.jpg"
+  - "**/*.jpeg"
+  - "**/*.gif"
+  - "**/*.png"
+  - "**/*.ico"
+  - "public/**"
+  - "src/**"
+  - .storybook/**
   - package.json
   - wp-content/
   - "!**/Secrets.json*"

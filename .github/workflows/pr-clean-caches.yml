@@ -3,6 +3,8 @@ name: Cleanup caches after PR is closed
 on:
   pull_request:
     types: [closed]
+  schedule:
+    - cron: 0 0 * * *
 
 jobs:
   cleanup:
