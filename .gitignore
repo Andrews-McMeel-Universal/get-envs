@@ -24,6 +24,8 @@
 # logfiles and tempfiles
 /log/*
 /tmp/*
+**/tmp/pids/
+**/tmp/cache/
 !/log/.keep
 !/tmp/.keep
 logs
@@ -53,6 +55,10 @@ capybara-*.html
 /spec/tmp
 *.orig
 rerun.txt
+tfs-sw.js
+tfs-sw.js.map
+workbox-*.js
+workbox-*.js.map
 
 # Comment out this rule if you are OK with secrets being uploaded to the repo
 config/initializers/secret_token.rb
@@ -313,7 +319,6 @@ x86/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
-[Bb]in/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
@@ -708,6 +713,10 @@ FodyWeavers.xsd
 /.pnp
 .pnp.js
 
+# generated during build
+robots.txt
+sitemap*.xml
+
 # misc
 .DS_Store
 
@@ -720,17 +729,11 @@ debug.log
 # local env files
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 
 # Sentry
 .sentryclirc
 .sentry.properties
-
-# Sitemap
-public/sitemap.xml
-public/robots.txt
 
 # Key Vaults
 Secrets.json
