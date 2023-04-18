@@ -70,7 +70,7 @@ runs:
       shell: sh
       run: |
         while read -r envVar; do
-            if [[ $(echo "${envVar}" | grep -Ei "SECRET|TOKEN|KEY|PASS|CONNECTION_STRING") ]]; then
+            if [ $(echo "${envVar}" | grep -Ei "SECRET|TOKEN|KEY|PASS|CONNECTION_STRING") ]; then
               VAR=$(echo "${envVar}" | awk -F '=' '{print $1}')
               VALUE="${envVar//$VAR=/}"
               echo "::add-mask::$VALUE"
