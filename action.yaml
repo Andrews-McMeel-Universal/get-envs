@@ -70,8 +70,10 @@ runs:
       shell: sh
       run: |
         while read -r envVar; do
-          if [ $(echo "${envVar}" | grep -Ei "SECRET|TOKEN|KEY|PASS|CONNECTION_STRING") ]; then
-            echo "::add-mask::$(echo ${envVar} | awk -F '=' '{print $2}')"
-          fi
-          echo "$envVar" >> $GITHUB_ENV
+            if [[ $(echo "${envVar}" | grep -Ei "SECRET|TOKEN|KEY|PASS|CONNECTION_STRING") ]]; then
+              VAR=$(echo "${envVar}" | awk -F '=' '{print $1}')
+              VALUE="${envVar//$VAR=/}"
+              echo "::add-mask::$VALUE"
+            fi
+            echo "$envVar" >> $GITHUB_ENV
         done < ${{ github.workspace }}/.env
