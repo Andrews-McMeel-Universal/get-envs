@@ -72,7 +72,7 @@ runs:
         while read -r envVar; do
             if [ $(echo "${envVar}" | grep -Ei "SECRET|TOKEN|KEY|PASS|CONNECTION_STRING") ]; then
               VAR=$(echo "${envVar}" | awk -F '=' '{print $1}')
-              VALUE="${envVar//$VAR=/}"
+              VALUE=$(echo $envVar | sed "s/$VAR=//g")
               echo "::add-mask::$VALUE"
             fi
             echo "$envVar" >> $GITHUB_ENV
