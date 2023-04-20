@@ -58,11 +58,16 @@ runs:
           [String]$KeyVaultName = $KeyVaultName.Replace(" ", "")
           Write-Output "::notice::KeyVaultName: $KeyVaultName"
           $envSecrets = (Get-AzKeyVaultSecret -VaultName $KeyVaultName  | Where-Object { ($_.ContentType -contains 'Env') -or ($_.ContentType -contains 'BuildArg Env') }).Name
-          $envSecrets | ForEach-Object {
-              $envName = $_.ToUpper().Replace("-", "_")
-              $envSecret = (Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $_).secretvalue | ConvertFrom-SecureString -AsPlainText
-              $envContent = $envName + "=" + $envSecret
-              Add-Content -Path "${{ github.workspace }}/.env" -Value $envContent
+          if ($envSecrets) {
+            $envSecrets | ForEach-Object {
+                $envName = $_.ToUpper().Replace("-", "_")
+                $envSecret = (Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $_).secretvalue | ConvertFrom-SecureString -AsPlainText
+                $envContent = $envName + "=" + $envSecret
+                Add-Content -Path "${{ github.workspace }}/.env" -Value $envContent
+            }
+          }
+          else {
+            Add-Content -Path "${{ github.workspace }}/.env" ""
           }
         azPSVersion: "latest"
 
