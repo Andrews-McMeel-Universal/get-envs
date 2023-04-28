@@ -21,7 +21,7 @@ jobs:
           token: ${{ secrets.PAT_ACTION_CI }}
 
       - name: actions-template-sync
-        uses: AndreasAugustin/actions-template-sync@v0.7.3
+        uses: AndreasAugustin/actions-template-sync@v0.8.0
         with:
           github_token: ${{ secrets.PAT_ACTION_CI }}
           source_repo_path: Andrews-McMeel-Universal/action_template/
@@ -31,3 +31,5 @@ jobs:
           pr_title: 🔄 Sync with @Andrews-McMeel-Universal/action_template
           pr_branch_name_prefix: sync/action_template/
           is_dry_run: ${{ inputs.isdryrun || 'false' }}
+          git_user_name: amutechtest
+          git_user_email: amu_deploy@amuniversal.com
