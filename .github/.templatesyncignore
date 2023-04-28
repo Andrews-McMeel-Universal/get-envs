@@ -1,5 +1,3 @@
 README.md
 action.yaml
-.github/dependabot.yml
-.github/CODEOWNERS
 .github/workflows/template-sync.yml
