@@ -2,7 +2,7 @@ name: 🔄 Sync with action_template
 
 on:
   schedule:
-    - cron: 0 9 * * 1
+    - cron: 0 9 1 * *
   workflow_dispatch:
     inputs:
       isdryrun:
