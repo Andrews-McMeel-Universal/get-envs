@@ -6,6 +6,12 @@ This will generate a `.env` file within a job and will add all of the secrets to
 
 > NOTE: All values with the following keys, `SECRET|TOKEN|KEY|PASS`, will be masked from the GitHub output.
 
+## Getting Started
+
+```bash
+git clone https://github.com/Andrews-McMeel-Universal/get-envs
+```
+
 ## Installation
 
 To make `get-envs` a part of your workflow, just add a step to one of your workflows in your `.github/workflows/` directory in your GitHub repository.
