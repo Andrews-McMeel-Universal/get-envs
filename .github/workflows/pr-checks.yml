@@ -27,8 +27,6 @@ jobs:
     secrets:
       JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
 
-  # Required status check
-  # Checks code quality
   lint:
     if: ${{ github.actor != 'dependabot[bot]' }}
     name: Simple Lint
