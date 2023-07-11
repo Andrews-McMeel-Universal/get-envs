@@ -1,6 +1,6 @@
-name: Cache Envs from Azure KeyVault
+name: Retrieve Secrets from Azure KeyVault
 
-description: Generates and caches a env file
+description: Generates an environment variable file with Azure Key Vault secrets
 
 inputs:
   azurecredentials:
@@ -20,6 +20,7 @@ inputs:
 branding:
   color: purple
   icon: unlock
+
 runs:
   using: "composite"
   steps:
@@ -47,7 +48,7 @@ runs:
         enable-AzPSSession: true
 
     - name: Generate .env file from Azure Key Vaults
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         inlineScript: |
           $environment = "${{ inputs.environment }}"
