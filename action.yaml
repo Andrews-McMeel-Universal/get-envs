@@ -52,23 +52,49 @@ runs:
         inlineScript: |
           $environment = "${{ inputs.environment }}"
           $repositoryName = "${{ inputs.repositoryName }}"
+          $environmentKeyVault = "${{ inputs.environmentKeyVault }}"
 
-          if ("${{ inputs.environmentKeyVault }}") {
-              $KeyVaultName = "${{ inputs.environmentKeyVault }}"
+          # Check if searching for key vaults by repository name or otherwise, if key vault name argument is given
+          if (!$environmentKeyVault) {
+            # Search for key vault using tags
+            Write-Host "Searching for key vault with tags: 'repository-name=$repositoryName;environment=$environment'" -ForegroundColor DarkGray
+            $KeyVaultName = (Get-AzKeyVault -Tag @{"environment" = "$environment" } | Get-AzKeyVault -Tag @{"repository-name" = "$repositoryName" }).VaultName
+
+            # Check if key vault name is empty
+            if (!$KeyVaultName) {
+                Write-Error "Key vault name cannot be found. Please confirm this repository's key vaults are tagged correctly."
+                return
+            }
           }
           else {
-              $KeyVaultName = (Get-AzKeyVault -Tag @{"environment" = "$environment" } | Get-AzKeyVault -Tag @{"repository-name" = "$repositoryName" }).VaultName
+            $KeyVaultName = $environmentKeyVault
           }
 
+          # Get key vault object
+          $KeyVault = Get-AzKeyVault -Name "$KeyVaultName"
+
+          # Check if key vault exists
+          if (!$KeyVault) {
+              Write-Error "Invalid value provided for 'KeyVaultName'. Please confirm a Key Vault exists under the name specified. Value provided: $KeyVaultName"
+              return
+          }
           [String]$KeyVaultName = $KeyVaultName.Replace(" ", "")
           Write-Output "::notice::KeyVaultName: $KeyVaultName"
-          $envSecrets = (Get-AzKeyVaultSecret -VaultName $KeyVaultName  | Where-Object { ($_.ContentType -contains 'Env') -or ($_.ContentType -contains 'BuildArg Env') }).Name
-          if ($envSecrets) {
-            $envSecrets | ForEach-Object {
-                $envName = $_.ToUpper().Replace("-", "_")
-                $envSecret = (Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $_).secretvalue | ConvertFrom-SecureString -AsPlainText
-                $envContent = $envName + "=" + $envSecret
-                Add-Content -Path "${{ github.workspace }}/.env" -Value $envContent
+
+          # Set secrets list
+          $Secrets = (Get-AzKeyVaultSecret -VaultName "$KeyVaultName").Name
+
+          # Loop through secrets and add them to .env
+          if ($Secrets) {
+            $Secrets | ForEach-Object {
+              # Convert to upper case snake case and remove quotes
+              $SecretName = $_.ToUpper().Replace("-", "_").Replace("`"", "")
+
+              # Get secret value and set it to the secret name
+              $SecretValue = (Get-AzKeyVaultSecret -VaultName "$KeyVaultName" -Name $_).SecretValue | ConvertFrom-SecureString -AsPlainText
+
+              # Add secret to file
+              Add-Content -Path "${{ github.workspace }}/.env" -Value "$SecretName=$SecretValue"
             }
           }
           else {
