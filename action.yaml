@@ -24,7 +24,14 @@ branding:
 runs:
   using: "composite"
   steps:
+    - name: Check if Azure Credentials Exist
+      id: azure-credentials
+      uses: andstor/file-existence-action@v2
+      with:
+        files: "~/.Azure,${{ github.workspace }}/.Azure"
+
     - name: Login to Azure
+      if: steps.azure-credentials.outputs.files_exists == 'false'
       uses: Andrews-McMeel-Universal/cache-azure-login@v1
       with:
         azureCredentials: "${{ inputs.azurecredentials }}"
