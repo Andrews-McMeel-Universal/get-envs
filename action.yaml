@@ -54,6 +54,12 @@ runs:
       with:
         azureCredentials: "${{ inputs.azurecredentials }}"
 
+    - name: Debug azure-credentials-exist variable
+      shell: bash
+      run: |
+        echo "${{ steps.azure-credentials.outputs.azure-credentials-exist }}"
+        echo "The above value is the output of azure-credentials-exist"
+
     - name: Generate .env file from Azure Key Vaults
       uses: azure/powershell@v1
       with:
