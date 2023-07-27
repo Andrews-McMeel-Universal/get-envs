@@ -29,9 +29,11 @@ runs:
       shell: bash
       run: |
         if [[ $(ls ~/.Azure/ || ls ${{ github.workspace }}/.Azure/) ]] ; then
-          echo "azure-credentials-exist=true" >> $GITHUB_OUTPUT
+          echo "azure-credentials-exist='true'" >> $GITHUB_OUTPUT
+          echo "Azure Credentials exist on file system"
         else
-          echo "azure-credentials-exist=false" >> $GITHUB_OUTPUT
+          echo "azure-credentials-exist='false'" >> $GITHUB_OUTPUT
+          echo "Azure credentials do not exist on file system"
         fi
 
     - name: Login to Azure
