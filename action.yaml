@@ -28,7 +28,7 @@ runs:
       id: azure-credentials
       uses: andstor/file-existence-action@v2
       with:
-        files: "~/.Azure,${{ github.workspace }}/.Azure"
+        files: "~/.Azure/,${{ github.workspace }}/.Azure/"
 
     - name: Login to Azure
       if: steps.azure-credentials.outputs.files_exists == 'false'
