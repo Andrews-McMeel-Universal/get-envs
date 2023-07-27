@@ -31,22 +31,13 @@ runs:
         if [[ $(ls ~/.Azure/ || ls ${{ github.workspace }}/.Azure/) ]] ; then
           echo "azure-credentials-exist=true" >> $GITHUB_OUTPUT
           echo "Azure Credentials exist on file system"
+        else
+          echo "azure-credentials-exist=false" >> $GITHUB_OUTPUT
+          echo "Azure Credentials exist on file system"
         fi
 
-    - name: Test azure-credentials-exist variable [true]
-      if: steps.azure-credentials.outputs.azure-credentials-exist == true
-      shell: bash
-      run: |
-        echo "The test true step has run"
-
-    - name: Test azure-credentials-exist variable [false]
-      if: steps.azure-credentials.outputs.azure-credentials-exist
-      shell: bash
-      run: |
-        echo "The test false step has run"
-
     - name: Login to Azure
-      if: ! steps.azure-credentials.outputs.azure-credentials-exist
+      if: steps.azure-credentials.outputs.azure-credentials-exist == false
       uses: Andrews-McMeel-Universal/cache-azure-login@v1
       with:
         azureCredentials: "${{ inputs.azurecredentials }}"
