@@ -31,9 +31,6 @@ runs:
         if [[ $(ls ~/.Azure/ || ls ${{ github.workspace }}/.Azure/) ]] ; then
           echo "azure-credentials-exist=true" >> $GITHUB_OUTPUT
           echo "Azure Credentials exist on file system"
-        else
-          echo "azure-credentials-exist=false" >> $GITHUB_OUTPUT
-          echo "Azure credentials do not exist on file system"
         fi
 
     - name: Test azure-credentials-exist variable [true]
@@ -43,22 +40,16 @@ runs:
         echo "The test true step has run"
 
     - name: Test azure-credentials-exist variable [false]
-      if: steps.azure-credentials.outputs.azure-credentials-exist == false
+      if: steps.azure-credentials.outputs.azure-credentials-exist
       shell: bash
       run: |
         echo "The test false step has run"
 
     - name: Login to Azure
-      if: steps.azure-credentials.outputs.azure-credentials-exist == false
+      if: ! steps.azure-credentials.outputs.azure-credentials-exist
       uses: Andrews-McMeel-Universal/cache-azure-login@v1
       with:
         azureCredentials: "${{ inputs.azurecredentials }}"
-
-    - name: Debug azure-credentials-exist variable
-      shell: bash
-      run: |
-        echo "${{ steps.azure-credentials.outputs.azure-credentials-exist }}"
-        echo "The above value is the output of azure-credentials-exist"
 
     - name: Generate .env file from Azure Key Vaults
       uses: azure/powershell@v1
