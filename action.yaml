@@ -26,12 +26,16 @@ runs:
   steps:
     - name: Check if Azure Credentials Exist
       id: azure-credentials
-      uses: andstor/file-existence-action@v2
-      with:
-        files: "~/.Azure/,${{ github.workspace }}/.Azure/"
+      shell: bash
+      run: |
+        if [[ $(ls ~/.Azure/ || ls ${{ github.workspace }}/.Azure/) ]] ; then
+          echo "azure-credentials-exist=true" >> $GITHUB_OUTPUT
+        else
+          echo "azure-credentials-exist=false" >> $GITHUB_OUTPUT
+        fi
 
     - name: Login to Azure
-      if: steps.azure-credentials.outputs.files_exists == 'false'
+      if: steps.azure-credentials.outputs.azure-credentials-exist == 'false'
       uses: Andrews-McMeel-Universal/cache-azure-login@v1
       with:
         azureCredentials: "${{ inputs.azurecredentials }}"
