@@ -37,7 +37,7 @@ runs:
         fi
 
     - name: Login to Azure
-      if: steps.azure-credentials.outputs.azure-credentials-exist == 'false'
+      if: steps.azure-credentials.outputs.azure-credentials-exist == 'true'
       uses: Andrews-McMeel-Universal/cache-azure-login@v1
       with:
         azureCredentials: "${{ inputs.azurecredentials }}"
