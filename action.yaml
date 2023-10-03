@@ -30,60 +30,59 @@ runs:
         azureCredentials: "${{ inputs.azurecredentials }}"
 
     - name: Generate .env file from Azure Key Vaults
-      uses: azure/powershell@v1
-      with:
-        inlineScript: |
-          $environment = "${{ inputs.environment }}"
-          $repositoryName = "${{ inputs.repositoryName }}"
-          $environmentKeyVault = "${{ inputs.environmentKeyVault }}"
+      shell: bash
+      run: |
+        ENVIRONMENT="${{ inputs.environment }}"
+        REPOSITORY_NAME="${{ inputs.repositoryName }}"
+        ENV_KEYVAULT_NAME="${{ inputs.environmentKeyVault }}"
 
-          # Check if searching for key vaults by repository name or otherwise, if key vault name argument is given
-          if (!$environmentKeyVault) {
+        DARKGRAY='\e[38;5;232m'
+        RED='\e[0;31m'
+
+        # Check if searching for key vaults by repository name or otherwise, if key vault name argument is given
+        if [ -z "${ENV_KEYVAULT_NAME}" ]; then
             # Search for key vault using tags
-            Write-Host "Searching for key vault with tags: 'repository-name=$repositoryName;environment=$environment'" -ForegroundColor DarkGray
-            $KeyVaultName = (Get-AzKeyVault -Tag @{"environment" = "$environment" } | Get-AzKeyVault -Tag @{"repository-name" = "$repositoryName" }).VaultName
+            echo -e "${DARKGRAY}Searching for key vault with tags: \"repository-name=${REPOSITORY_NAME};environment=${ENVIRONMENT}\""
+            KEYVAULT_NAME=$(az keyvault list --query "[?tags.\"repository-name\" == '${REPOSITORY_NAME}' && tags.environment == '${ENVIRONMENT}'].name" --output tsv)
 
             # Check if key vault name is empty
-            if (!$KeyVaultName) {
-                Write-Error "Key vault name cannot be found. Please confirm this repository's key vaults are tagged correctly."
-                return
-            }
-          }
-          else {
-            $KeyVaultName = $environmentKeyVault
-          }
+            if [ -z "${KEYVAULT_NAME}" ]; then
+                echo -e "${RED}Key vault name cannot be found. Please confirm this repository's key vaults are tagged correctly."
+                exit 1
+            fi
+        else
+            KEYVAULT_NAME="${ENV_KEYVAULT_NAME}"
+        fi
 
-          # Get key vault object
-          $KeyVault = Get-AzKeyVault -Name "$KeyVaultName"
+        # Get key vault object
+        KEYVAULT=$(az keyvault list --query "[?name == '${KEYVAULT_NAME}']" )
 
-          # Check if key vault exists
-          if (!$KeyVault) {
-              Write-Error "Invalid value provided for 'KeyVaultName'. Please confirm a Key Vault exists under the name specified. Value provided: $KeyVaultName"
-              return
-          }
-          [String]$KeyVaultName = $KeyVaultName.Replace(" ", "")
-          Write-Output "::notice::KeyVaultName: $KeyVaultName"
+        # Check if key vault exists
+        if ! echo "${KEYVAULT}" | grep -Eq "\w"; then
+            echo -e "${RED}Invalid value provided for 'KeyVaultName'. Please confirm a Key Vault exists under the name specified. Value provided: ${KEYVAULT_NAME}"
+            exit 1
+        fi
+        KEYVAULT_NAME=${KEYVAULT_NAME// /}
+        echo "::notice::KeyVaultName: ${KEYVAULT_NAME}"
 
-          # Set secrets list
-          $Secrets = (Get-AzKeyVaultSecret -VaultName "$KeyVaultName").Name
+        # Set secrets list
+        SECRETS=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[].name" --output tsv)
 
-          # Loop through secrets and add them to .env
-          if ($Secrets) {
-            $Secrets | ForEach-Object {
-              # Convert to upper case snake case and remove quotes
-              $SecretName = $_.ToUpper().Replace("-", "_").Replace("`"", "")
+        # Loop through secrets and add them to .env
+        if echo "${SECRETS}" | grep -Eq "\w"; then
+            while IFS= read -r SECRET; do
+                # Convert to upper case snake case and remove quotes
+                SECRET_NAME=$(echo "${SECRET}" | tr '[:upper:][:lower:]' '[:lower:][:upper:]' | tr "-" "_" | tr -d '"')
 
-              # Get secret value and set it to the secret name
-              $SecretValue = (Get-AzKeyVaultSecret -VaultName "$KeyVaultName" -Name $_).SecretValue | ConvertFrom-SecureString -AsPlainText
+                # Get secret value and set it to the secret name
+                SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --query "value" --output tsv)
 
-              # Add secret to file
-              Add-Content -Path "${{ github.workspace }}/.env" -Value "$SecretName=$SecretValue"
-            }
-          }
-          else {
-            Add-Content -Path "${{ github.workspace }}/.env" ""
-          }
-        azPSVersion: "latest"
+                # Add secret to file
+                echo "${SECRET_NAME}=${SECRET_VALUE}" >> "${{ github.workspace }}/.env"
+            done < <(echo "${SECRETS[*]}")
+        else
+            echo "" >> "${{ github.workspace }}/.env"
+        fi
 
     - name: Source secrets file
       shell: sh
