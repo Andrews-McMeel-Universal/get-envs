@@ -25,9 +25,10 @@ runs:
   using: "composite"
   steps:
     - name: Login to Azure
-      uses: Andrews-McMeel-Universal/cache-azure-login@story/DEVOPS-267/optimize-get-envs
+      uses: Andrews-McMeel-Universal/cache-azure-login@v1
       with:
         azureCredentials: "${{ inputs.azurecredentials }}"
+        enable-AzPsSession: false
 
     - name: Generate .env file from Azure Key Vaults
       shell: bash
