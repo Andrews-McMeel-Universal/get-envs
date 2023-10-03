@@ -25,7 +25,7 @@ runs:
   using: "composite"
   steps:
     - name: Login to Azure
-      uses: Andrews-McMeel-Universal/cache-azure-login@v1
+      uses: Andrews-McMeel-Universal/cache-azure-login@story/DEVOPS-267/optimize-get-envs
       with:
         azureCredentials: "${{ inputs.azurecredentials }}"
 
