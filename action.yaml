@@ -24,11 +24,10 @@ branding:
 runs:
   using: "composite"
   steps:
-    - name: Login to Azure
-      uses: Andrews-McMeel-Universal/cache-azure-login@v1
+    - name: Login via Az module
+      uses: azure/login@v1
       with:
-        azureCredentials: "${{ inputs.azurecredentials }}"
-        enable-AzPsSession: false
+        creds: "${{ inputs.azurecredentials }}"
 
     - name: Generate .env file from Azure Key Vaults
       shell: bash
