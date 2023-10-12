@@ -1,4 +1,4 @@
-name: Cleanup caches
+name: 🗑️ Cleanup caches
 
 on:
   pull_request:

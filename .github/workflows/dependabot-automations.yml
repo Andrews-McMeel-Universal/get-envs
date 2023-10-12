@@ -1,4 +1,4 @@
-name: Dependabot Automations
+name: 🤖 Dependabot Automations
 
 on:
   pull_request_target:
@@ -9,10 +9,6 @@ permissions:
   pull-requests: write
   contents: write
   repository-projects: write
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   dependabot-automations:
