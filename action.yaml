@@ -16,6 +16,10 @@ inputs:
   environment:
     required: false
     description: "Deployment environment"
+  setBuildArguments:
+    required: false
+    description: Only retrieve secrets with the 'BuildArg' ContentType.
+    default: "false"
 
 branding:
   color: purple
@@ -35,6 +39,7 @@ runs:
         ENVIRONMENT="${{ inputs.environment }}"
         REPOSITORY_NAME="${{ inputs.repositoryName }}"
         ENV_KEYVAULT_NAME="${{ inputs.environmentKeyVault }}"
+        SET_BUILD_ARGS="${{ inputs.setBuildArguments }}"
 
         DARKGRAY='\e[38;5;232m'
         RED='\e[0;31m'
@@ -66,7 +71,11 @@ runs:
         echo "::notice::KeyVaultName: ${KEYVAULT_NAME}"
 
         # Set secrets list
-        SECRETS=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[].name" --output tsv)
+        if "${SET_BUILD_ARGS}" ; then
+            SECRETS=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[?contentType == 'BuildArg Env' || contentType == 'BuildArg'].name" --output tsv)
+        else
+            SECRETS=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[].name" --output tsv)
+        fi
 
         # Loop through secrets and add them to .env
         if echo "${SECRETS}" | grep -Eq "\w"; then
@@ -77,14 +86,22 @@ runs:
                 # Get secret value and set it to the secret name
                 SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --query "value" --output tsv)
 
-                # Add secret to file
-                echo "${SECRET_NAME}=${SECRET_VALUE}" >> "${{ github.workspace }}/.env"
+                # Add secret
+                if "${SET_BUILD_ARGS}" ; then
+                    BUILDARGS="${BUILDARGS} --build-arg ${SECRET_NAME}=${SECRET_VALUE}"
+                else
+                    echo "${SECRET_NAME}=${SECRET_VALUE}" >> "${{ github.workspace }}/.env"
+                fi
             done < <(echo "${SECRETS[*]}")
         else
             echo "" >> "${{ github.workspace }}/.env"
         fi
+        if "${SET_BUILD_ARGS}" ; then
+            echo "buildArguments=${BUILDARGS}" >> $GITHUB_ENV
+        fi
 
     - name: Source secrets file
+      if: ${{ inputs.setBuildArguments != 'true' }}
       shell: sh
       run: |
         while read -r envVar; do
