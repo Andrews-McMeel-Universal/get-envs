@@ -111,6 +111,11 @@ runs:
                 # Get secret value and set it to the secret name
                 SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --query "value" --output tsv)
 
+                # Break loop if secret name or value is empty
+                if [[ -z "${SECRET_NAME}" ]] || [[ -z "${SECRET_VALUE}" ]]; then
+                    continue
+                fi
+
                 # Add secret
                 if "${SET_BUILD_ARGS}"; then
                     if "${ADD_BUILD_ARG_PREDICATE}"; then
