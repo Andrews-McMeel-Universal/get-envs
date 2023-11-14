@@ -18,7 +18,11 @@ inputs:
     description: "Deployment environment"
   setBuildArguments:
     required: false
-    description: Only retrieve secrets with the 'BuildArg' ContentType.
+    description: "Only retrieve secrets with the 'BuildArg' ContentType."
+    default: "false"
+  addBuildArgPredicate:
+    required: false
+    description: "Add --build-arg predicate before each build arg"
     default: "false"
 
 branding:
@@ -40,6 +44,7 @@ runs:
         REPOSITORY_NAME="${{ inputs.repositoryName }}"
         ENV_KEYVAULT_NAME="${{ inputs.environmentKeyVault }}"
         SET_BUILD_ARGS="${{ inputs.setBuildArguments }}"
+        ADD_BUILD_ARG_PREDICATE="${{ inputs.addBuildArgPredicate }}"
 
         DARKGRAY="\033[38;5;232m"
         RED="\033[0;31m"
@@ -107,8 +112,12 @@ runs:
                 SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --query "value" --output tsv)
 
                 # Add secret
-                if "${SET_BUILD_ARGS}" ; then
-                    BUILDARGS="${BUILDARGS} --build-arg ${SECRET_NAME}=${SECRET_VALUE}"
+                if "${SET_BUILD_ARGS}"; then
+                    if "${ADD_BUILD_ARG_PREDICATE}"; then
+                        BUILDARGS="${BUILDARGS} --build-arg ${SECRET_NAME}=${SECRET_VALUE}"
+                    else
+                        BUILDARGS="${BUILDARGS} ${SECRET_NAME}=${SECRET_VALUE}"
+                    fi
                 else
                     echo "${SECRET_NAME}=${SECRET_VALUE}" >> "${{ github.workspace }}/.env"
                 fi
