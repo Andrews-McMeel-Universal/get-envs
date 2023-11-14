@@ -20,10 +20,6 @@ inputs:
     required: false
     description: "Only retrieve secrets with the 'BuildArg' ContentType."
     default: "false"
-  addBuildArgPredicate:
-    required: false
-    description: "Add --build-arg predicate before each build arg"
-    default: "false"
 
 branding:
   color: purple
@@ -118,12 +114,7 @@ runs:
 
                 # Add secret
                 if "${SET_BUILD_ARGS}"; then
-                    if "${ADD_BUILD_ARG_PREDICATE}"; then
-                        BUILDARGS="${BUILDARGS} --build-arg ${SECRET_NAME}=${SECRET_VALUE}"
-                    else
-                        BUILDARGS="${BUILDARGS} \
-                        ${SECRET_NAME}=${SECRET_VALUE}"
-                    fi
+                    BUILDARGS="${BUILDARGS} --build-arg ${SECRET_NAME}=${SECRET_VALUE}"
                 else
                     echo "${SECRET_NAME}=${SECRET_VALUE}" >> "${{ github.workspace }}/.env"
                 fi
