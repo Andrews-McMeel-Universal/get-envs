@@ -116,7 +116,7 @@ runs:
                     if "${ADD_BUILD_ARG_PREDICATE}"; then
                         BUILDARGS="${BUILDARGS} --build-arg ${SECRET_NAME}=${SECRET_VALUE}"
                     else
-                        BUILDARGS="${BUILDARGS} ${SECRET_NAME}=${SECRET_VALUE}"
+                        BUILDARGS="${BUILDARGS}\n${SECRET_NAME}=${SECRET_VALUE}"
                     fi
                 else
                     echo "${SECRET_NAME}=${SECRET_VALUE}" >> "${{ github.workspace }}/.env"
