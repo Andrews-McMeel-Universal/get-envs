@@ -16,10 +16,14 @@ inputs:
   environment:
     required: false
     description: "Deployment environment"
-  setBuildArguments:
+  contentTypes:
     required: false
-    description: "Only retrieve secrets with the 'BuildArg' ContentType."
-    default: "false"
+    description: "Space-separated list of contentTypes to retrieve"
+    default: "Env"
+  excludeContentTypes:
+    required: false
+    description: "Space-separated list of contentTypes to ignore"
+    default: "Env"
 
 branding:
   color: purple
@@ -39,18 +43,17 @@ runs:
         ENVIRONMENT="${{ inputs.environment }}"
         REPOSITORY_NAME="${{ inputs.repositoryName }}"
         ENV_KEYVAULT_NAME="${{ inputs.environmentKeyVault }}"
-        SET_BUILD_ARGS="${{ inputs.setBuildArguments }}"
-        ADD_BUILD_ARG_PREDICATE="${{ inputs.addBuildArgPredicate }}"
+        CONTENT_TYPES="${{ inputs.contentTypes }}"
+        EXCLUDE_CONTENT_TYPES="${{ inputs.excludeContentTypes }}"
+        FILE="${{ github.workspace }}/.env"
 
-        DARKGRAY="\033[38;5;232m"
-        RED="\033[0;31m"
-        YELLOW="\033[0;33m"
-        NC="\033[0m" # No Color
-
-        # # If ENV_KEYVAULT_NAME is empty, search for key vault using tags
-        if [ -z "${ENV_KEYVAULT_NAME}" ]; then
+        # If ENV_KEYVAULT_NAME is empty, search for key vault using tags
+        if [ -n "${ENV_KEYVAULT_NAME}" ]; then
+            # If ENV_KEYVAULT_NAME is not empty, use it as the key vault name
+            KEYVAULT_NAME="${ENV_KEYVAULT_NAME}"
+        else
             # Search for key vault using tags
-            echo -e "${DARKGRAY}Searching for key vault with tags: \"repository-name=${REPOSITORY_NAME};environment=${ENVIRONMENT}\"${NC}"
+            echo -e "Searching for key vault with tags: \"repository-name=${REPOSITORY_NAME};environment=${ENVIRONMENT}\""
 
             # Initialize a counter
             COUNTER=1
@@ -63,67 +66,87 @@ runs:
                 fi
 
                 # Display retry attempt and increment the COUNTER
-                echo -e "${YELLOW}Retrieval of the key vault failed on attempt ${COUNTER} of 5. Waiting 5 seconds before trying again.${NC}"
+                echo -e "Retrieval of the key vault failed on attempt ${COUNTER} of 5. Waiting 5 seconds before trying again."
                 COUNTER=$((COUNTER+1))
 
                 # Exit with error after 5 failed attempts
                 if [[ "${COUNTER}" -eq 6 ]]; then
-                    echo -e "${RED}Failed to list key vaults after 5 attempts. Please confirm this repository's key vaults are tagged correctly.${NC}"
+                    echo -e "Failed to list key vaults after 5 attempts. Please confirm this repository's key vaults are tagged correctly."
                     exit 1
                 fi
 
                 # Pause before next attempt
                 sleep 5
             done
-        else
-            # If ENV_KEYVAULT_NAME is not empty, use it as the key vault name
-            KEYVAULT_NAME="${ENV_KEYVAULT_NAME}"
         fi
 
         # Get key vault object
+        KEYVAULT_NAME=${KEYVAULT_NAME// /}
         KEYVAULT=$(az keyvault list --query "[?name == '${KEYVAULT_NAME}']" )
 
         # Check if key vault exists
         if ! echo "${KEYVAULT}" | grep -Eq "\w"; then
-            echo -e "${RED}Invalid value provided for 'KeyVaultName'. Please confirm a Key Vault exists under the name specified. Value provided: ${NC}${KEYVAULT_NAME}"
+            echo -e "Invalid value provided for 'KeyVaultName'. Please confirm a Key Vault exists under the name specified. Value provided: ${KEYVAULT_NAME}"
             exit 1
         fi
-        KEYVAULT_NAME=${KEYVAULT_NAME// /}
-        echo "::notice::KeyVaultName: ${KEYVAULT_NAME}"
 
         # Set secrets list
-        if "${SET_BUILD_ARGS}" ; then
-            SECRETS=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[?contentType == 'BuildArg Env' || contentType == 'BuildArg'].name" --output tsv)
-        else
-            SECRETS=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[].name" --output tsv)
-        fi
+        echo "Retrieving list of secrets for key vault: ${KEYVAULT_NAME}"
+        SECRETS=()
+        for CONTENT_TYPE in ${CONTENT_TYPES}; do
+            SECRET_LIST=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[?contains(contentType, '${CONTENT_TYPE}')].name" --output tsv)
+            while read -r SECRET; do
+                SECRETS+=("${SECRET}")
+            done <<< "${SECRET_LIST}"
+        done
 
-        # Loop through secrets and add them to .env
-        if echo "${SECRETS}" | grep -Eq "\w"; then
-            while IFS= read -r SECRET; do
+        # Remove duplicates
+        SECRET_LIST=()
+        for SECRET in "${SECRETS[@]}"; do
+          if [[ ! " ${SECRET_LIST[*]} " =~ ${SECRET} ]]; then
+            SECRET_LIST+=("${SECRET}")
+          fi
+        done
+        SECRETS=("${SECRET_LIST[@]}")
+
+        # Loop through secrets and add them to ${FILE}
+        echo "Retrieving secrets for key vault: ${KEYVAULT_NAME}"
+        if echo "${SECRETS[*]}" | grep -Eq "\w"; then
+            for SECRET in "${SECRETS[@]}"; do
                 # Convert to upper case snake case and remove quotes
                 SECRET_NAME=$(echo "${SECRET}" | tr '[:upper:][:lower:]' '[:lower:][:upper:]' | tr "-" "_" | tr -d '"')
 
-                # Get secret value and set it to the secret name
-                SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --query "value" --output tsv)
+                # Retrieve all properties of the secret
+                SECRET_OBJECT=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv)
 
-                # Break loop if secret name or value is empty
-                if [[ -z "${SECRET_NAME}" ]] || [[ -z "${SECRET_VALUE}" ]]; then
-                    continue
-                fi
+                # Get secret content type
+                SECRET_CONTENT_TYPE=$(echo "${SECRET_OBJECT}" | awk -F "\t" '{print $2}')
+
+                # Get secret value and set it to the secret name
+                SECRET_VALUE=$(echo "${SECRET_OBJECT}" | awk -F "\t" '{print $3}')
 
                 # Add secret
-                if "${SET_BUILD_ARGS}"; then
-                    BUILDARGS="${BUILDARGS} --build-arg ${SECRET_NAME}=${SECRET_VALUE}"
-                else
-                    echo "${SECRET_NAME}=${SECRET_VALUE}" >> "${{ github.workspace }}/.env"
+                if ! [[ "${SECRET_CONTENT_TYPE}" =~ ${EXCLUDE_CONTENT_TYPES} ]]; then
+                    echo "Retrieving secret: ${SECRET_NAME}"
+                    if [[ "${SECRET_CONTENT_TYPE}" == *"BuildArg"* ]]; then
+                        BUILD_ARGUMENTS="${BUILD_ARGUMENTS} --build-arg ${SECRET_NAME}=${SECRET_VALUE}"
+                    fi
+                    if [[ "${SECRET_CONTENT_TYPE}" =~ "Env" ]] || [[ "${SECRET_CONTENT_TYPE}" =~ "Key" ]]; then
+                        ENVIRONMENT_VARIABLES+="${SECRET_NAME}=${SECRET_VALUE} "
+                        echo "${SECRET_NAME}=${SECRET_VALUE}" >> ${FILE}
+                    fi
                 fi
-            done < <(echo "${SECRETS[*]}")
+            done
         else
-            echo "" >> "${{ github.workspace }}/.env"
+            echo "" >> ${FILE}
         fi
-        if "${SET_BUILD_ARGS}" ; then
-            echo "buildArguments=${BUILDARGS}" >> $GITHUB_ENV
+
+        echo "Adding secrets to \$GITHUB_ENV"
+        if [[ "${CONTENT_TYPES}" == *"BuildArg"* ]]; then
+            echo "buildArguments=${BUILD_ARGUMENTS}" >> $GITHUB_ENV
+        fi
+        if [[ "${CONTENT_TYPES}" == *"Env"* ]] || [[ "${CONTENT_TYPES}" == *"Key"* ]]; then
+            echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_ENV
         fi
 
     - name: Source secrets file
