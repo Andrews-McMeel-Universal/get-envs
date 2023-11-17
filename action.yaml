@@ -19,11 +19,9 @@ inputs:
   contentTypes:
     required: false
     description: "Space-separated list of contentTypes to retrieve"
-    default: "Env"
   excludeContentTypes:
     required: false
     description: "Space-separated list of contentTypes to ignore"
-    default: "Env"
 
 branding:
   color: purple
@@ -93,12 +91,17 @@ runs:
         # Set secrets list
         echo "Retrieving list of secrets for key vault: ${KEYVAULT_NAME}"
         SECRETS=()
-        for CONTENT_TYPE in ${CONTENT_TYPES}; do
-            SECRET_LIST=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[?contains(contentType, '${CONTENT_TYPE}')].name" --output tsv)
-            while read -r SECRET; do
-                SECRETS+=("${SECRET}")
-            done <<< "${SECRET_LIST}"
-        done
+        if [[ -z "${CONTENT_TYPES}" ]]; then
+            # shellcheck disable=SC2207
+            SECRETS=($(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[].name" --output tsv))
+        else
+            for CONTENT_TYPE in ${CONTENT_TYPES}; do
+                SECRET_LIST=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[?contains(contentType, '${CONTENT_TYPE}')].name" --output tsv)
+                while read -r SECRET; do
+                    SECRETS+=("${SECRET}")
+                done <<< "${SECRET_LIST}"
+            done
+        fi
 
         # Remove duplicates
         SECRET_LIST=()
@@ -123,7 +126,7 @@ runs:
                 SECRET_CONTENT_TYPE=$(echo "${SECRET_OBJECT}" | awk -F "\t" '{print $2}')
 
                 # Get secret value and set it to the secret name
-                SECRET_VALUE=$(echo "${SECRET_OBJECT}" | awk -F "\t" '{print $3}')
+                SECRET_VALUE=$(echo "${SECRET_OBJECT}" | awk -F "\t" '{print $8}')
 
                 # Add secret
                 if ! [[ "${SECRET_CONTENT_TYPE}" =~ ${EXCLUDE_CONTENT_TYPES} ]]; then
@@ -141,11 +144,12 @@ runs:
             echo "" >> ${FILE}
         fi
 
-        echo "Adding secrets to \$GITHUB_ENV"
         if [[ "${CONTENT_TYPES}" == *"BuildArg"* ]]; then
+            echo "Build arguments have been added to '\${{ env.buildArguments }}'"
             echo "buildArguments=${BUILD_ARGUMENTS}" >> $GITHUB_ENV
         fi
-        if [[ "${CONTENT_TYPES}" == *"Env"* ]] || [[ "${CONTENT_TYPES}" == *"Key"* ]]; then
+        if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]] || [[ "${CONTENT_TYPES}" == *"Key"* ]]; then
+            echo "Environment variables have been added to '\${{ env.environmentVariables }}'"
             echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_ENV
         fi
 
