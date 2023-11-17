@@ -19,9 +19,6 @@ inputs:
   contentTypes:
     required: false
     description: "Space-separated list of contentTypes to retrieve"
-  excludeContentTypes:
-    required: false
-    description: "Space-separated list of contentTypes to ignore"
 
 branding:
   color: purple
@@ -43,7 +40,6 @@ runs:
         REPOSITORY_NAME="${{ inputs.repositoryName }}"
         ENV_KEYVAULT_NAME="${{ inputs.environmentKeyVault }}"
         CONTENT_TYPES="${{ inputs.contentTypes }}"
-        EXCLUDE_CONTENT_TYPES="${{ inputs.excludeContentTypes }}"
 
         # If ENV_KEYVAULT_NAME is empty, search for key vault using tags
         if [ -n "${ENV_KEYVAULT_NAME}" ]; then
@@ -97,6 +93,7 @@ runs:
                 SECRET_NAME=$(echo "${SECRET}" | tr '[:upper:][:lower:]' '[:lower:][:upper:]' | tr "-" "_" | tr -d '"')
 
                 # Retrieve all properties of the secret
+                echo "Retrieving secret: ${SECRET_NAME}"
                 SECRET_OBJECT=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv)
 
                 # Get secret content type
@@ -106,15 +103,12 @@ runs:
                 SECRET_VALUE=$(echo "${SECRET_OBJECT}" | awk -F "\t" '{print $8}')
 
                 # Add secret
-                if ! [[ "${SECRET_CONTENT_TYPE}" =~ ${EXCLUDE_CONTENT_TYPES} ]]; then
-                    echo "Retrieving secret: ${SECRET_NAME}"
-                    if [[ "${SECRET_CONTENT_TYPE}" == *"BuildArg"* ]]; then
-                        BUILD_ARGUMENTS="${BUILD_ARGUMENTS} --build-arg ${SECRET_NAME}=${SECRET_VALUE}"
-                    fi
-                    if [[ "${SECRET_CONTENT_TYPE}" =~ "Env" ]]; then
-                        ENVIRONMENT_VARIABLES+="${SECRET_NAME}=${SECRET_VALUE} "
-                        echo "${SECRET_NAME}=${SECRET_VALUE}" >> "${{ github.workspace }}/.env"
-                    fi
+                if [[ "${SECRET_CONTENT_TYPE}" == *"BuildArg"* ]]; then
+                    BUILD_ARGUMENTS="${BUILD_ARGUMENTS} --build-arg ${SECRET_NAME}=${SECRET_VALUE}"
+                fi
+                if [[ "${SECRET_CONTENT_TYPE}" =~ "Env" ]]; then
+                    ENVIRONMENT_VARIABLES+="${SECRET_NAME}=${SECRET_VALUE} "
+                    echo "${SECRET_NAME}=${SECRET_VALUE}" >> "${{ github.workspace }}/.env"
                 fi
             done
         else
