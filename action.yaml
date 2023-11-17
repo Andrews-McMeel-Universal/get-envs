@@ -36,6 +36,7 @@ runs:
         creds: "${{ inputs.azurecredentials }}"
 
     - name: Generate .env file from Azure Key Vaults
+      id: get-envs
       shell: bash
       run: |
         ENVIRONMENT="${{ inputs.environment }}"
@@ -145,12 +146,12 @@ runs:
         fi
 
         if [[ "${CONTENT_TYPES}" == *"BuildArg"* ]]; then
-            echo "Build arguments have been added to '\${{ env.buildArguments }}'"
-            echo "buildArguments=${BUILD_ARGUMENTS}" >> $GITHUB_ENV
+            echo "Build arguments have been added to 'buildArguments' output"
+            echo "buildArguments=${BUILD_ARGUMENTS}" >> $GITHUB_OUTPUT
         fi
         if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]] || [[ "${CONTENT_TYPES}" == *"Key"* ]]; then
-            echo "Environment variables have been added to '\${{ env.environmentVariables }}'"
-            echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_ENV
+            echo "Environment variables have been added to 'environmentVariables' output"
+            echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
         fi
 
     - name: Source secrets file
@@ -165,3 +166,11 @@ runs:
             fi
             echo "$envVar" >> $GITHUB_ENV
         done < ${{ github.workspace }}/.env
+
+outputs:
+  environmentVariables:
+    value: ${{ steps.get-envs.outputs.environmentVariables }}
+    description: "List of environment variables retrieved from key vault"
+  buildArguments:
+    value: ${{ steps.get-envs.outputs.buildArguments }}
+    description: "List of build arguments retrieved from key vault"
