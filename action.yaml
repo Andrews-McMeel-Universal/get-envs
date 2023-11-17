@@ -56,7 +56,7 @@ runs:
         KEYVAULT=$(az keyvault list --query "[?name == '${KEYVAULT_NAME}']" )
 
         # Check if key vault exists
-        if ! echo "${KEYVAULT}" | grep -Eq "\w"; then
+        if ! echo "${KEYVAULT}" | grep -E "\w" > /dev/null; then
             echo -e "Invalid value provided for 'KeyVaultName'. Please confirm a Key Vault exists under the name specified. Value provided: ${KEYVAULT_NAME}"
             exit 1
         fi
