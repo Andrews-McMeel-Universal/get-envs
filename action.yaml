@@ -79,7 +79,8 @@ runs:
         # Remove duplicates
         SECRET_LIST=()
         for SECRET in "${SECRETS[@]}"; do
-          if [[ ! " ${SECRET_LIST[*]} " =~ ${SECRET} ]]; then
+          # shellcheck disable=SC2076
+          if ! [[ " ${SECRET_LIST[*]} " =~ " ${SECRET} " ]]; then
             SECRET_LIST+=("${SECRET}")
           fi
         done
