@@ -1,0 +1,32 @@
+name: 🤖 Dependabot Automations
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [main, development]
+
+permissions:
+  pull-requests: write
+  contents: write
+  repository-projects: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependabot-automations:
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    name: Dependabot PR Automations
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/dependabot-automations.yaml@2
+    with:
+      autoApprove: ${{ vars.DEPENDABOT_AUTOAPPROVE || '["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]' }}
+      autoMerge: ${{ vars.DEPENDABOT_AUTOMERGE || 'false' }}
+
+  required-checks:
+    name: Required Checks
+    runs-on: ubuntu-latest
+    needs: [dependabot-automations]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3

@@ -217,6 +217,9 @@ wp-content/shield/
 
 # Ignore compiled storybook directory
 /storybook-static
+.storybook/main.js
+.storybook/preview-body.html
+.storybook/preview.js
 
 # Ignore uploaded files in development
 /storage/*
@@ -234,6 +237,7 @@ wp-content/shield/
 next.config.original.js
 next.config.wizardcopy.js
 /build
+public/sitemap*.xml
 
 # Runtime data
 pids
@@ -329,19 +333,20 @@ atlassian-ide-plugin.xml
 mono_crash.*
 
 # Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-[Ww][Ii][Nn]32/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Oo]bj/
-[Ll]og/
-[Ll]ogs/
+*Service.*/[Dd]ebug/
+*Service.*/[Dd]ebugPublic/
+*Service.*/[Rr]elease/
+*Service.*/[Rr]eleases/
+*Service.*/x64/
+*Service.*/x86/
+*Service.*/[Ww][Ii][Nn]32/
+*Service.*/[Aa][Rr][Mm]/
+*Service.*/[Aa][Rr][Mm]64/
+*Service.*/bld/
+*Service.*/[Oo]bj/
+*Service.*/[Ll]og/
+*Service.*/[Ll]ogs/
+*Service.*/bin/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
