@@ -84,18 +84,18 @@ version-resolver:
   major:
     labels:
       - 'major'
+      - 'epic'
+      - 'feature'
   minor:
     labels:
       - 'minor'
-      - 'epic'
-      - 'feature'
+      - 'story'
+      - 'maintenance'
+      - 'research'
   patch:
     labels:
       - 'patch'
-      - 'story'
       - 'bug'
-      - 'maintenance'
-      - 'research'
       - 'sync'
   default: patch
 template: |
