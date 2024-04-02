@@ -15,8 +15,8 @@ jobs:
     name: Jira PR Linter
     uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/jira-lint.yaml@2
     with:
-      fail-on-error: false
-      skip-comments: true
+      fail-on-error: ${{ vars.JIRA_LINT_FAIL_ON_ERROR || 'false' }}
+      skip-comments: ${{ vars.JIRA_LINT_SKIP_COMMENTS || 'true' }}
     secrets:
       JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
 
@@ -29,3 +29,14 @@ jobs:
       prettierPlugins: ${{ vars.INSTALL_PRETTIER_PLUGINS }}
     secrets:
       PAT_ACTION_CI: ${{ secrets.PAT_ACTION_CI }}
+
+  do-not-merge:
+    name: Disable merging on label
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'do not merge') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for label
+        run: |
+          echo "Pull request is labeled as 'do not merge'"
+          echo "This workflow fails so that the pull request cannot be merged"
+          exit 1

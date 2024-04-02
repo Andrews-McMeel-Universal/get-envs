@@ -1,24 +1,27 @@
 # Get Environment Variables Action
 
-GitHub actions to pull down secrets from Azure Key Vaults.
+This GitHub action retrieves secrets from Azure Key Vaults and makes them available in your workflows.
 
-This will generate a `.env` file within a job and will add all of the secrets to the `$GITHUB_ENV` environment variable.
+## Features
 
-> NOTE: All values with the following keys, `SECRET|TOKEN|KEY|PASS`, will be masked from the GitHub output.
+- Generates a `.env` file within a job, adding all the secrets to the `$GITHUB_ENV` environment variable
+- Masks values with keys such as `SECRET`, `TOKEN`, `KEY`, `PASS` in the GitHub output for security.
 
-## Getting Started
+## Quick Start
+
+Clone the repository:
 
 ```bash
 git clone https://github.com/Andrews-McMeel-Universal/get-envs
 ```
 
-## Installation
+## Integration
 
-To make `get-envs` a part of your workflow, just add a step to one of your workflows in your `.github/workflows/` directory in your GitHub repository.
+To integrate `get-envs` into your workflow, add a step to a workflow in your `.github/workflows/` directory.
 
-### Find Tagged KeyVault
+### Auto-detect KeyVault
 
-If you'd prefer to not set the `environmentKeyVault` manually, you can just set the `environment` like below. This will automatically find the Azure Key Vault that has matching tags to the `environment` and the `repositoryName` values.
+Set the `environment` to automatically find the Azure Key Vault with matching tags to the `environment` and `repositoryName`.
 
 ```yml
 - uses: Andrews-McMeel-Universal/get-envs@v1.1
@@ -27,9 +30,9 @@ If you'd prefer to not set the `environmentKeyVault` manually, you can just set 
     environment: development
 ```
 
-### Specifying Key Vault Name
+### Specify Key Vault Name
 
-To specify a Key Vault to download the Secret values from, you can specify the Key Vault name in the `environmentKeyVault` option when calling the action.
+To download secrets from a specific Key Vault, specify its name in the `environmentKeyVault` option.
 
 ```yml
 - uses: Andrews-McMeel-Universal/get-envs@v1.1
@@ -38,11 +41,11 @@ To specify a Key Vault to download the Secret values from, you can specify the K
     environmentKeyVault: get-envs
 ```
 
-## Options
+## Configuration Options
 
-| Variable              | Description                                                                                                                                                                                                                           | Required | `[Default]`                           |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: | ------------------------------------- |
-| `azurecredentials`    | Credentials to login to Azure. This is usually set to `${{ secrets.AZURE_CREDENTIALS }}`                                                                                                                                              |    x     | `N/A`                                 |
-| `environmentKeyVault` | Azure Key Vault Name. If this value is given, the action will search for a Key Vault with a matching name. Otherwise, the action will automatically use the `repositoryName` and the `environment` options to get the Key Vault name. |          | `N/A`                                 |
-| `repositoryName`      | GitHub Repository Name                                                                                                                                                                                                                |          | `${{ github.event.repository.name }}` |
-| `environment`         | Deployment environment                                                                                                                                                                                                                |          | `N/A`                                 |
+| Variable              | Description                                                                                                        | Required | Default                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------ | :------: | ------------------------------------- |
+| `azurecredentials`    | Azure login credentials. Usually set to `${{ secrets.AZURE_CREDENTIALS }}`.                                        |    ✔️    | `N/A`                                 |
+| `environmentKeyVault` | Name of the Azure Key Vault. If provided, the action will search for a matching Key Vault.                         |          | `N/A`                                 |
+| `repositoryName`      | GitHub Repository Name.                                                                                            |          | `${{ github.event.repository.name }}` |
+| `environment`         | Deployment environment.                                                                                            |          | `N/A`                                 |
