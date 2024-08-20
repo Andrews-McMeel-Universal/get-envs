@@ -19,6 +19,10 @@ inputs:
   contentTypes:
     required: false
     description: "Space-separated list of contentTypes to retrieve"
+  buildArgPredicate:
+    required: false
+    description: "Predicate to determine if a secret should be added as a build argument"
+    default: "--build-arg"
 
 branding:
   color: purple
@@ -105,7 +109,7 @@ runs:
 
                 # Add secret
                 if [[ "${SECRET_CONTENT_TYPE}" == *"BuildArg"* ]]; then
-                    BUILD_ARGUMENTS="${BUILD_ARGUMENTS} --build-arg ${SECRET_NAME}=${SECRET_VALUE}"
+                    BUILD_ARGUMENTS="${BUILD_ARGUMENTS} ${{ inputs.buildArgPredicate }} ${SECRET_NAME}=${SECRET_VALUE}"
                 fi
                 if [[ "${SECRET_CONTENT_TYPE}" =~ "Env" ]]; then
                     ENVIRONMENT_VARIABLES+="${SECRET_NAME}=${SECRET_VALUE} "
