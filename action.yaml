@@ -130,7 +130,7 @@ runs:
         fi
         if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]]; then
             if [[ "${{ inputs.environmentVariableSeparator }}" != " " ]]; then
-                echo 'environmentVariables'<<EOF' >> $GITHUB_OUTPUT
+                echo 'environmentVariables<<EOF' >> $GITHUB_OUTPUT
                 echo "${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
                 echo 'EOF' >> $GITHUB_OUTPUT
                 echo "Environment variables have been added to 'environmentVariables' output"
