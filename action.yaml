@@ -129,8 +129,15 @@ runs:
             echo "buildArguments=${BUILD_ARGUMENTS}" >> $GITHUB_OUTPUT
         fi
         if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]]; then
-            echo "Environment variables have been added to 'environmentVariables' output"
-            echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
+            if [[ "${{ inputs.environmentVariableSeparator }}" != " " ]]; then
+                echo 'environmentVariables<<EOF' >> $GITHUB_OUTPUT
+                echo "${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
+                echo 'EOF' >> $GITHUB_OUTPUT
+                echo "Environment variables have been added to 'environmentVariables' output"
+            else
+                echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
+                echo "Environment variables have been added to 'environmentVariables' output"
+            fi
         fi
 
     - name: Source secrets file
