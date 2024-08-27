@@ -23,6 +23,10 @@ inputs:
     required: false
     description: "Predicate to determine if a secret should be added as a build argument"
     default: "--build-arg"
+  environmentVariableSeparator:
+    required: false
+    description: "Separator for environment variables"
+    default: " "
 
 branding:
   color: purple
@@ -112,7 +116,7 @@ runs:
                     BUILD_ARGUMENTS="${BUILD_ARGUMENTS} ${{ inputs.buildArgPredicate }} ${SECRET_NAME}=${SECRET_VALUE}"
                 fi
                 if [[ "${SECRET_CONTENT_TYPE}" =~ "Env" ]]; then
-                    ENVIRONMENT_VARIABLES+="${SECRET_NAME}=${SECRET_VALUE} "
+                    ENVIRONMENT_VARIABLES+="${SECRET_NAME}=${SECRET_VALUE}${{ inputs.environmentVariableSeparator }}"
                     echo "${SECRET_NAME}=${SECRET_VALUE}" >> "${{ github.workspace }}/.env"
                 fi
             done
