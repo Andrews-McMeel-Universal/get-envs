@@ -77,7 +77,7 @@ runs:
             SECRETS=($(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[].name" --output tsv))
         else
             for CONTENT_TYPE in ${CONTENT_TYPES}; do
-                SECRET_LIST=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[?contains(contentType, '${CONTENT_TYPE}')].name" --output tsv)
+                SECRET_LIST=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[?contentType && contains(contentType, '${CONTENT_TYPE}')].name" --output tsv)
                 while read -r SECRET; do
                     SECRETS+=("${SECRET}")
                 done <<< "${SECRET_LIST}"
