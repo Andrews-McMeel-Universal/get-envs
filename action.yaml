@@ -117,11 +117,11 @@ runs:
                 fi
                 if [[ "${SECRET_CONTENT_TYPE}" =~ "Env" ]]; then
                     ENVIRONMENT_VARIABLES+="${SECRET_NAME}=${SECRET_VALUE}${{ inputs.environmentVariableSeparator }}"
-                    echo "${SECRET_NAME}=${SECRET_VALUE}" >> "${{ github.workspace }}/.env"
+                    echo "${SECRET_NAME}=${SECRET_VALUE}" >> ".env"
                 fi
             done
         else
-            echo "" >> "${{ github.workspace }}/.env"
+            echo "" >> ".env"
         fi
 
         if [[ "${CONTENT_TYPES}" == *"BuildArg"* ]]; then
@@ -151,7 +151,7 @@ runs:
               echo "::add-mask::$VALUE"
             fi
             echo "$envVar" >> $GITHUB_ENV
-        done < ${{ github.workspace }}/.env
+        done < .env
 
 outputs:
   environmentVariables:
