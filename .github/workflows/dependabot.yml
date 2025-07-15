@@ -18,15 +18,22 @@ jobs:
   dependabot-automations:
     if: ${{ github.actor == 'dependabot[bot]' }}
     name: Dependabot PR Automations
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/dependabot-automations.yaml@2
-    with:
-      autoApprove: ${{ vars.DEPENDABOT_AUTOAPPROVE || '["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]' }}
-      autoMerge: ${{ vars.DEPENDABOT_AUTOMERGE || 'false' }}
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/dependabot-automations.yaml@latest
 
   required-checks:
     name: Required Checks
     runs-on: ubuntu-latest
+    if: always()
     needs: [dependabot-automations]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Failed Checks
+        if: needs.dependabot-automations.result == 'failure'
+        run: |
+          echo "One or more required checks failed"
+          echo "Please fix the issues before merging the pull request"
+          exit 1
+      - name: Successful Checks
+        if: needs.dependabot-automations.result == 'success'
+        run: |
+          echo "All required checks passed"
+          echo "You can merge the pull request"

@@ -173,7 +173,6 @@ wp-content/shield/
 *.kar
 *.mp3
 *.ogg
-*.m4a
 *.ra
 *.3gpp
 *.3gp
@@ -218,9 +217,6 @@ wp-content/shield/
 
 # Ignore compiled storybook directory
 /storybook-static
-.storybook/main.js
-.storybook/preview-body.html
-.storybook/preview.js
 
 # Ignore uploaded files in development
 /storage/*
@@ -794,13 +790,12 @@ FodyWeavers.xsd
 # Project Specific
 # unique ignores for this project
 
+# UI Applications
+next-env.d.ts
+
 # dependencies
 /.pnp
 .pnp.js
-
-# generated during build
-robots.txt
-sitemap*.xml
 
 # misc
 .DS_Store
@@ -848,3 +843,13 @@ terraform/*.key
 
 # Ansible
 vault.yml
+inventories/group_vars/amu
+
+# Typesense
+data/db
+data/meta
+data/models
+data/state
+
+# Syndication
+public/uu_site/

@@ -13,10 +13,7 @@ permissions:
 
 jobs:
   update-release-draft:
-    name: Update Release Draft
-    runs-on: ubuntu-latest
-    steps:
-      - name: Draft Release Notes
-        uses: release-drafter/release-drafter@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    name: Draft Release Notes
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/release-drafter.yaml@latest
+    secrets:
+      PAT_ACTION_CI: ${{ secrets.PAT_ACTION_CI }}

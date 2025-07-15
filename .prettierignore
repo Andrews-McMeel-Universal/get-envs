@@ -3,6 +3,7 @@
 .git/
 .vscode/
 .idea/
+*.lock
 
 # GitHub Actions Workflows
 .github/
@@ -23,13 +24,7 @@ test-results/
 **.js.map
 **.bundle.js
 storybook-static/
-src/helpers/utilities/tokens/_design_tokens.js
-*.tsbuildinfo
-**/vendor
-/tests/
-**/.test.
-# Project Specific Ignores
-src/design-system-package/dist/**
+.yarn/
 
 # WordPress
 wp-content/
