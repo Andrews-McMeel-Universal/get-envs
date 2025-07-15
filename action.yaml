@@ -104,6 +104,10 @@ runs:
         done
         SECRETS=("${SECRET_LIST[@]}")
 
+        # Initialize variables
+        BUILD_ARGUMENTS=""
+        ENVIRONMENT_VARIABLES=""
+
         # Loop through secrets and add them to .env file
         echo "Retrieving secrets for key vault: ${KEYVAULT_NAME}"
         if echo "${SECRETS[*]}" | grep -E "\s" > /dev/null; then
@@ -123,8 +127,14 @@ runs:
 
                 # Add secret
                 if [[ "${SECRET_CONTENT_TYPE}" == *"BuildArg"* ]]; then
-                    BUILD_ARGUMENTS="${BUILD_ARGUMENTS} ${{ inputs.buildArgPredicate }} ${SECRET_NAME}=${SECRET_VALUE}"
+                    if [[ -z "${BUILD_ARGUMENTS}" ]]; then
+                        BUILD_ARGUMENTS="${{ inputs.buildArgPredicate }} ${SECRET_NAME}=${SECRET_VALUE}"
+                    else
+                        BUILD_ARGUMENTS="${BUILD_ARGUMENTS} ${{ inputs.buildArgPredicate }} ${SECRET_NAME}=${SECRET_VALUE}"
+                    fi
                 fi
+
+                # Add secret to environment variables
                 if [[ "${SECRET_CONTENT_TYPE}" =~ "Env" ]]; then
                     ENVIRONMENT_VARIABLES+="${SECRET_NAME}=${SECRET_VALUE}${{ inputs.environmentVariableSeparator }}"
                     echo "${SECRET_NAME}=${SECRET_VALUE}" >> ".env"
