@@ -35,6 +35,10 @@ branding:
 runs:
   using: "composite"
   steps:
+    - name: Normalize Git config
+      run: git config --global core.autocrlf false
+      shell: bash
+
     - name: Login via Az module
       uses: azure/login@v2
       with:
@@ -85,7 +89,7 @@ runs:
         fi
 
         # Remove duplicates
-        SECRET_LIST=()
+        SECRET_LIST=()ƒtre
         for SECRET in "${SECRETS[@]}"; do
           # shellcheck disable=SC2076
           if ! [[ " ${SECRET_LIST[*]} " =~ " ${SECRET} " ]]; then
@@ -103,13 +107,12 @@ runs:
 
                 # Retrieve all properties of the secret
                 echo "Retrieving secret: ${SECRET_NAME}"
-                SECRET_OBJECT=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv)
+
+                # Get secret value
+                SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "value")
 
                 # Get secret content type
-                SECRET_CONTENT_TYPE=$(echo "${SECRET_OBJECT}" | awk -F "\t" '{print $2}')
-
-                # Get secret value and set it to the secret name
-                SECRET_VALUE=$(echo "${SECRET_OBJECT}" | awk -F "\t" '{print $8}')
+                SECRET_CONTENT_TYPE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "contentType")
 
                 # Add secret
                 if [[ "${SECRET_CONTENT_TYPE}" == *"BuildArg"* ]]; then
