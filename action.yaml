@@ -35,6 +35,10 @@ branding:
 runs:
   using: "composite"
   steps:
+    - name: Normalize Git config
+      run: git config --global core.autocrlf false
+      shell: bash
+
     - name: Login via Az module
       uses: azure/login@v2
       with:
@@ -85,7 +89,7 @@ runs:
         fi
 
         # Remove duplicates
-        SECRET_LIST=()ƒtre
+        SECRET_LIST=()
         for SECRET in "${SECRETS[@]}"; do
           # shellcheck disable=SC2076
           if ! [[ " ${SECRET_LIST[*]} " =~ " ${SECRET} " ]]; then
