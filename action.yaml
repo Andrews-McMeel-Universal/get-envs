@@ -35,10 +35,6 @@ branding:
 runs:
   using: "composite"
   steps:
-    - name: Normalize Git config
-      run: git config --global core.autocrlf false
-      shell: bash
-
     - name: Login via Az module
       uses: azure/login@v2
       with:
