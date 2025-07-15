@@ -46,7 +46,7 @@ runs:
 
     - name: Generate .env file from Azure Key Vaults
       id: get-envs
-      shell: bash
+      shell: shell
       run: |
         ENVIRONMENT="${{ inputs.environment }}"
         REPOSITORY_NAME="${{ inputs.repositoryName }}"
