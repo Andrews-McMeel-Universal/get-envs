@@ -109,6 +109,10 @@ runs:
                 echo "Retrieving secret: ${SECRET_NAME}"
 
                 # Get secret value
+                echo "az keyvault secret show --vault-name \"${KEYVAULT_NAME}\" -n \"${SECRET}\" --output tsv --query \"value\""
+                echo "KeyVault: ${KEYVAULT_NAME}"
+                echo "Secret: ${SECRET}"
+                echo "Secret Name: ${SECRET_NAME}"
                 SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "value")
 
                 # Get secret content type
