@@ -106,7 +106,7 @@ runs:
 
         # Loop through secrets and add them to .env file
         echo "Retrieving secrets for key vault: ${KEYVAULT_NAME}"
-        if echo "${SECRETS[*]}" | grep -E "\s" > /dev/null; then
+        if echo "${SECRETS[*]}" | grep -E "\w" > /dev/null; then
             for SECRET in "${SECRETS[@]}"; do
                 # Convert to upper case snake case and remove quotes
                 SECRET_NAME=$(echo "${SECRET}" | tr '[:upper:][:lower:]' '[:lower:][:upper:]' | tr "-" "_" | tr -d '"')
