@@ -12,25 +12,10 @@ on:
 
 jobs:
   repo-sync:
-    name: Repository Sync
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout branch or tag
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.PAT_ACTION_CI }}
+    name: Sync with template repository
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/template-sync.yaml@latest
+    with:
+      isdryrun: ${{ inputs.isdryrun }}
+    secrets:
+      PAT_ACTION_CI: ${{ secrets.PAT_ACTION_CI }}
 
-      - name: actions-template-sync
-        uses: AndreasAugustin/actions-template-sync@v1.1.1
-        with:
-          github_token: ${{ secrets.PAT_ACTION_CI }}
-          source_repo_path: Andrews-McMeel-Universal/${{ vars.SYNC_REPO }}
-          upstream_branch: ${{ vars.SYNC_REPO_BRANCH || 'main' }}
-          pr_labels: sync
-          pr_commit_msg: 🔄 Synchronize with @Andrews-McMeel-Universal/${{ vars.SYNC_REPO }}
-          pr_title: 🔄 Sync with @Andrews-McMeel-Universal/${{ vars.SYNC_REPO }}
-          pr_branch_name_prefix: sync/
-          pr_reviewers: Andrews-McMeel-Universal/devops-engineers
-          is_dry_run: ${{ inputs.isdryrun || 'false' }}
-          git_user_name: amutechtest
-          git_user_email: amu_deploy@amuniversal.com

@@ -10,4 +10,4 @@ on:
 jobs:
   cleanup:
     name: Cleanup PR Caches
-    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/pr-clean-caches.yaml@2
+    uses: Andrews-McMeel-Universal/reusable_workflows/.github/workflows/pr-clean-caches.yaml@latest
