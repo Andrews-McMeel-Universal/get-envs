@@ -46,7 +46,7 @@ runs:
 
     - name: Generate .env file from Azure Key Vaults
       id: get-envs
-      shell: shell
+      shell: bash
       run: |
         ENVIRONMENT="${{ inputs.environment }}"
         REPOSITORY_NAME="${{ inputs.repositoryName }}"
@@ -78,12 +78,18 @@ runs:
         SECRETS=()
         if [[ -z "${CONTENT_TYPES}" ]]; then
             # shellcheck disable=SC2207
-            SECRETS=($(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[].name" --output tsv))
+            mapfile -t RAW_SECRETS < <(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[].name" --output tsv)
+            SECRETS=()
+            for SECRET in "${RAW_SECRETS[@]}"; do
+              CLEAN_SECRET=$(echo "${SECRET}" | tr -d '\r' | xargs)
+              SECRETS+=("${CLEAN_SECRET}")
+            done
         else
             for CONTENT_TYPE in ${CONTENT_TYPES}; do
                 SECRET_LIST=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[?contentType && contains(contentType, '${CONTENT_TYPE}')].name" --output tsv)
                 while read -r SECRET; do
-                    SECRETS+=("${SECRET}")
+                    CLEAN_SECRET=$(echo "${SECRET}" | tr -d '\r' | xargs)
+                    SECRETS+=("${CLEAN_SECRET}")
                 done <<< "${SECRET_LIST}"
             done
         fi
@@ -100,7 +106,7 @@ runs:
 
         # Loop through secrets and add them to .env file
         echo "Retrieving secrets for key vault: ${KEYVAULT_NAME}"
-        if echo "${SECRETS[*]}" | grep -E "\w" > /dev/null; then
+        if echo "${SECRETS[*]}" | grep -E "\s" > /dev/null; then
             for SECRET in "${SECRETS[@]}"; do
                 # Convert to upper case snake case and remove quotes
                 SECRET_NAME=$(echo "${SECRET}" | tr '[:upper:][:lower:]' '[:lower:][:upper:]' | tr "-" "_" | tr -d '"')
@@ -110,9 +116,6 @@ runs:
 
                 # Get secret value
                 echo "az keyvault secret show --vault-name \"${KEYVAULT_NAME}\" -n \"${SECRET}\" --output tsv --query \"value\""
-                echo "KeyVault: ${KEYVAULT_NAME}"
-                echo "Secret: ${SECRET}"
-                echo "Secret Name: ${SECRET_NAME}"
                 SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "value")
 
                 # Get secret content type
