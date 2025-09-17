@@ -168,7 +168,7 @@ runs:
 
     - name: Set outputs
       if: steps.cache-envs.outputs.cache-hit == 'true'
-      id: get-envs
+      id: get-envs-cached
       shell: bash
       run: |
         CONTENT_TYPES="${{ inputs.contentTypes }}"
@@ -211,8 +211,8 @@ runs:
 
 outputs:
   environmentVariables:
-    value: ${{ steps.get-envs.outputs.environmentVariables }}
+    value: ${{ steps.get-envs.outputs.environmentVariables || steps.get-envs-cached.outputs.environmentVariables }}
     description: "List of environment variables retrieved from key vault"
   buildArguments:
-    value: ${{ steps.get-envs.outputs.buildArguments }}
+    value: ${{ steps.get-envs.outputs.buildArguments || steps.get-envs-cached.outputs.buildArguments }}
     description: "List of build arguments retrieved from key vault"
