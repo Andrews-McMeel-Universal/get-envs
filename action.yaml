@@ -154,11 +154,10 @@ runs:
                 echo 'environmentVariables<<EOF' >> $GITHUB_OUTPUT
                 echo "${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
                 echo 'EOF' >> $GITHUB_OUTPUT
-                echo "Environment variables have been added to 'environmentVariables' output"
             else
                 echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
-                echo "Environment variables have been added to 'environmentVariables' output"
             fi
+            echo "Environment variables have been added to 'environmentVariables' output"
         fi
 
     - name: Decrypt cached .env file
@@ -175,10 +174,11 @@ runs:
         ENV_VAR_SEP="${{ inputs.environmentVariableSeparator }}"
 
         if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]]; then
+            ENVIRONMENT_VARIABLES=$(sed ':a;N;$!ba;s/\n\([^\n]\)/ \1/g' .env)
             if [[ "${ENV_VAR_SEP}" != " " ]]; then
                 echo 'environmentVariables<<EOF' >> $GITHUB_OUTPUT
-                sed ':a;N;$!ba;s/\n\([^\n]\)/ \1/g' .env >> $GITHUB_OUTPUT
-                echo -e '\nEOF' >> $GITHUB_OUTPUT
+                echo "${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
+                echo 'EOF' >> $GITHUB_OUTPUT
             else
                 ENVIRONMENT_VARIABLES=$(sed ":a;N;\$!ba;s/\n\([^\n]\)/${ENV_VAR_SEP}\1/g" .env)
                 echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
