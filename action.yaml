@@ -168,6 +168,7 @@ runs:
 
     - name: Set outputs
       if: steps.cache-envs.outputs.cache-hit == 'true'
+      id: get-envs
       shell: bash
       run: |
         CONTENT_TYPES="${{ inputs.contentTypes }}"
