@@ -169,7 +169,7 @@ runs:
 
     - name: Set outputs
       if: steps.cache-envs.outputs.cache-hit == 'true'
-      shell: sh
+      shell: bash
       run: |
         CONTENT_TYPES="${{ inputs.contentTypes }}"
         ENV_VAR_SEP="${{ inputs.environmentVariableSeparator }}"
@@ -192,7 +192,7 @@ runs:
 
     - name: Source secrets file
       if: ${{ inputs.setBuildArguments != 'true' }}
-      shell: sh
+      shell: bash
       run: |
         while read -r envVar; do
             if [ $(echo "${envVar}" | grep -Ei "SECRET|TOKEN|KEY|PASS|CONNECTION_STRING") ]; then
