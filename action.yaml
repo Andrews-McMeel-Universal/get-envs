@@ -173,17 +173,19 @@ runs:
       run: |
         CONTENT_TYPES="${{ inputs.contentTypes }}"
         ENV_VAR_SEP="${{ inputs.environmentVariableSeparator }}"
+
         if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]]; then
             if [[ "${ENV_VAR_SEP}" != " " ]]; then
                 echo 'environmentVariables<<EOF' >> $GITHUB_OUTPUT
                 sed ':a;N;$!ba;s/\n\([^\n]\)/ \1/g' .env >> $GITHUB_OUTPUT
                 echo -e '\nEOF' >> $GITHUB_OUTPUT
             else
-                ENVIRONMENT_VARIABLES=$(sed ':a;N;$!ba;s/\n\([^\n]\)/${ENV_VAR_SEP}\1/g' .env")
+                ENVIRONMENT_VARIABLES=$(sed ":a;N;\$!ba;s/\n\([^\n]\)/${ENV_VAR_SEP}\1/g" .env)
                 echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
             fi
             echo "Environment variables have been added to 'environmentVariables' output"
         fi
+
         if [[ "${CONTENT_TYPES}" == *"BuildArg"* ]]; then
             BUILD_ARGUMENTS=$(sed ':a;N;$!ba;s/\n\([^\n]\)/ --build-arg \1/g; s/^/--build-arg /' .env)
             echo "buildArguments=${BUILD_ARGUMENTS}" >> $GITHUB_OUTPUT
