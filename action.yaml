@@ -176,12 +176,12 @@ runs:
         if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]]; then
             if [[ "${ENV_VAR_SEP}" != " " ]]; then
                 echo 'environmentVariables<<EOF' >> $GITHUB_OUTPUT
-                cat .env | tr '\n' ' ' >> $GITHUB_OUTPUT
+                sed ':a;N;$!ba;s/\n\([^\n]\)/ \1/g' .env >> $GITHUB_OUTPUT
                 echo -e '\nEOF' >> $GITHUB_OUTPUT
             else
-                ENVIRONMENT_VARIABLES=$(cat .env | tr '\n' "${ENV_VAR_SEP}")
+                ENVIRONMENT_VARIABLES=$(sed ':a;N;$!ba;s/\n\([^\n]\)/${ENV_VAR_SEP}\1/g' .env")
+                echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
             fi
-            echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
             echo "Environment variables have been added to 'environmentVariables' output"
         fi
         if [[ "${CONTENT_TYPES}" == *"BuildArg"* ]]; then
