@@ -34,7 +34,6 @@ inputs:
   envEncryptionSecret:
     required: false
     description: "Secret used to encrypt/decrypt the .env file"
-    default: ${{ secrets.ENV_ENCRYPTION_SECRET }}
 
 branding:
   color: purple
