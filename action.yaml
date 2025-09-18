@@ -175,8 +175,17 @@ runs:
             echo "Build arguments have been added to 'buildArguments' output"
             echo "buildArguments=${BUILD_ARGUMENTS}" >> $GITHUB_OUTPUT
         fi
+
+        ENV_VAR_SEP="${{ inputs.environmentVariableSeparator }}"
         if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]]; then
-            echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
+            # Set environmentVariables output to a multi-line value in case of special characters or new lines
+            if [[ "${ENV_VAR_SEP}" != " " ]]; then
+                echo 'environmentVariables<<EOF' >> $GITHUB_OUTPUT
+                echo "${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
+                echo 'EOF' >> $GITHUB_OUTPUT
+            else
+                echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
+            fi
             echo "Environment variables have been added to 'environmentVariables' output"
         fi
 
@@ -201,10 +210,13 @@ runs:
         if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]]; then
             if [[ "${ENV_VAR_SEP}" != " " ]]; then
                 ENVIRONMENT_VARIABLES=$(sed ":a;N;\$!ba;s/\n\([^\n]\)/${ENV_VAR_SEP}\1/g" .env)
+                echo 'environmentVariables<<EOF' >> $GITHUB_OUTPUT
+                echo "${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
+                echo 'EOF' >> $GITHUB_OUTPUT
             else
                 ENVIRONMENT_VARIABLES=$(cat .env)
+                echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
             fi
-            echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
             echo "Environment variables have been added to 'environmentVariables' output"
         fi
 
