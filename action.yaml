@@ -58,7 +58,7 @@ runs:
         creds: "${{ inputs.azurecredentials }}"
 
     - name: Retrieve key vault name
-      if: ! inputs.environmentKeyVault && (steps.cache-envs.outputs.cache-hit != 'true' || (steps.cache-envs.outputs.cache-hit == 'true' && contains(inputs.contentTypes, 'BuildArg')))
+      if: (!inputs.environmentKeyVault) && (steps.cache-envs.outputs.cache-hit != 'true' || (steps.cache-envs.outputs.cache-hit == 'true' && contains(inputs.contentTypes, 'BuildArg')))
       id: kv-name
       shell: bash
       run: |
