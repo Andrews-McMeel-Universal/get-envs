@@ -313,7 +313,7 @@ runs:
         done < .env
 
     - name: Encrypt .env file for caching
-      if: steps.cache-envs.outputs.cache-hit != 'true'
+      if: inputs.enableCaching == 'true' && steps.cache-envs.outputs.cache-hit != 'true'
       shell: sh
       run: |
         # Encrypt .env file for caching
