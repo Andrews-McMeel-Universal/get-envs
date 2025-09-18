@@ -209,17 +209,10 @@ runs:
       run: |
         gpg --symmetric --batch --yes --passphrase "${{ inputs.envEncryptionSecret }}" -o .env.gpg .env
 
-    - name: Set outputs
-      id: outputs
-      shell: bash
-      run: |
-        echo "environmentVariables=${{ steps.get-envs.outputs.environmentVariables || steps.get-envs-cached.outputs.environmentVariables }}" >> $GITHUB_OUTPUT
-        echo "buildArguments=${{ steps.get-envs.outputs.buildArguments || steps.get-envs-cached.outputs.buildArguments }}" >> $GITHUB_OUTPUT
-
 outputs:
   environmentVariables:
-    value: ${{ steps.outputs.outputs.environmentVariables }}
+    value: ${{ steps.get-envs.outputs.environmentVariables || steps.get-envs-cached.outputs.environmentVariables }}
     description: "List of environment variables retrieved from key vault"
   buildArguments:
-    value: ${{ steps.outputs.outputs.buildArguments }}
+    value: ${{ steps.get-envs.outputs.buildArguments || steps.get-envs-cached.outputs.buildArguments }}
     description: "List of build arguments retrieved from key vault"
