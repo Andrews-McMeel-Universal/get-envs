@@ -27,6 +27,13 @@ inputs:
     required: false
     description: "Separator for environment variables"
     default: " "
+  enableCaching:
+    required: false
+    description: "Enable caching of the .env file"
+    default: "true"
+  envEncryptionSecret:
+    required: false
+    description: "Secret used to encrypt/decrypt the .env file"
 
 branding:
   color: purple
@@ -35,31 +42,54 @@ branding:
 runs:
   using: "composite"
   steps:
+    - name: Cache environment variables
+      id: cache-envs
+      if: ${{ inputs.enableCaching == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ github.workspace }}/.env.gpg
+        key: env-${{ github.sha }}
+
     - name: Login via Az module
+      if: steps.cache-envs.outputs.cache-hit != 'true' || (steps.cache-envs.outputs.cache-hit == 'true' && contains(inputs.contentTypes, 'BuildArg'))
       uses: azure/login@v2
       with:
         creds: "${{ inputs.azurecredentials }}"
 
-    - name: Generate .env file from Azure Key Vaults
-      id: get-envs
+    - name: Retrieve key vault name
+      if: (!inputs.environmentKeyVault) && (steps.cache-envs.outputs.cache-hit != 'true' || (steps.cache-envs.outputs.cache-hit == 'true' && contains(inputs.contentTypes, 'BuildArg')))
+      id: kv-name
       shell: bash
       run: |
-        ENVIRONMENT="${{ inputs.environment }}"
-        REPOSITORY_NAME="${{ inputs.repositoryName }}"
-        ENV_KEYVAULT_NAME="${{ inputs.environmentKeyVault }}"
-        CONTENT_TYPES="${{ inputs.contentTypes }}"
+        # Retrieve key vault name
+        set -euo pipefail
 
-        # If ENV_KEYVAULT_NAME is empty, search for key vault using tags
-        if [ -n "${ENV_KEYVAULT_NAME}" ]; then
-            # If ENV_KEYVAULT_NAME is not empty, use it as the key vault name
-            KEYVAULT_NAME="${ENV_KEYVAULT_NAME}"
-        else
-            # Search for key vault using tags
-            echo -e "Searching for key vault with tags: \"repository-name=${REPOSITORY_NAME};environment=${ENVIRONMENT}\""
-            KEYVAULT_NAME=$(az keyvault list --query "[?tags.\"repository-name\" == '${REPOSITORY_NAME}' && tags.environment == '${ENVIRONMENT}'].name" --output tsv)
+        REPOSITORY_NAME="${{ inputs.repositoryName }}"
+        ENVIRONMENT="${{ inputs.environment }}"
+
+        echo -e "Searching for key vault with tags: \"repository-name=${REPOSITORY_NAME};environment=${ENVIRONMENT}\""
+        KEYVAULT_NAME=$(az keyvault list --query "[?tags.\"repository-name\" == '${REPOSITORY_NAME}' && tags.environment == '${ENVIRONMENT}'].name" --output tsv)
+
+        if [ -z "${KEYVAULT_NAME}" ]; then
+            echo "No Key Vault found with the specified tags. Please confirm a Key Vault exists with the correct tags."
+            exit 1
         fi
 
+        echo "Found Key Vault: ${KEYVAULT_NAME}"
+        echo "keyVaultName=${KEYVAULT_NAME}" >> $GITHUB_OUTPUT
+
+    - name: Check if key vault exists
+      if: steps.cache-envs.outputs.cache-hit != 'true' || (steps.cache-envs.outputs.cache-hit == 'true' && contains(inputs.contentTypes, 'BuildArg'))
+      shell: bash
+      run: |
+        # Check if key vault exists
+        set -euo pipefail
+
+        KEYVAULT_NAME="${{ steps.kv-name.outputs.keyVaultName || inputs.environmentKeyVault }}"
+
         # Get key vault object
+        echo "Verifying Key Vault exists: ${KEYVAULT_NAME}"
         KEYVAULT_NAME=${KEYVAULT_NAME// /}
         KEYVAULT=$(az keyvault list --query "[?name == '${KEYVAULT_NAME}']" )
 
@@ -68,6 +98,17 @@ runs:
             echo -e "Invalid value provided for 'KeyVaultName'. Please confirm a Key Vault exists under the name specified. Value provided: ${KEYVAULT_NAME}"
             exit 1
         fi
+
+    - name: Pull secrets from Key Vault
+      if: steps.cache-envs.outputs.cache-hit != 'true'
+      id: get-envs
+      shell: bash
+      run: |
+        # Pull secrets from Key Vault
+        set -euo pipefail
+
+        CONTENT_TYPES="${{ inputs.contentTypes }}"
+        KEYVAULT_NAME="${{ steps.kv-name.outputs.keyVaultName }}"
 
         # Set secrets list
         echo "Retrieving list of secrets for key vault: ${KEYVAULT_NAME}"
@@ -99,12 +140,11 @@ runs:
           fi
         done
         SECRETS=("${SECRET_LIST[@]}")
+        echo "Total secrets found: ${#SECRETS[@]}"
 
         # Initialize variables
         BUILD_ARGUMENTS=""
         ENVIRONMENT_VARIABLES=""
-
-        # Loop through secrets and add them to .env file
         echo "Retrieving secrets for key vault: ${KEYVAULT_NAME}"
         if echo "${SECRETS[*]}" | grep -E "\w" > /dev/null; then
             for SECRET in "${SECRETS[@]}"; do
@@ -116,6 +156,11 @@ runs:
 
                 # Get secret value
                 SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "value")
+
+                # Mask secret value in logs
+                if [[ "$SECRET_NAME" =~ (SECRET|TOKEN|KEY|PASS|CONNECTION_STRING) ]]; then
+                    echo "::add-mask::$SECRET_VALUE"
+                fi
 
                 # Get secret content type
                 SECRET_CONTENT_TYPE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "contentType")
@@ -143,35 +188,141 @@ runs:
             echo "Build arguments have been added to 'buildArguments' output"
             echo "buildArguments=${BUILD_ARGUMENTS}" >> $GITHUB_OUTPUT
         fi
+
+        ENV_VAR_SEP="${{ inputs.environmentVariableSeparator }}"
         if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]]; then
-            if [[ "${{ inputs.environmentVariableSeparator }}" != " " ]]; then
+            # Set environmentVariables output to a multi-line value in case of special characters or new lines
+            if [[ "${ENV_VAR_SEP}" != " " ]]; then
                 echo 'environmentVariables<<EOF' >> $GITHUB_OUTPUT
                 echo "${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
                 echo 'EOF' >> $GITHUB_OUTPUT
-                echo "Environment variables have been added to 'environmentVariables' output"
             else
                 echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
-                echo "Environment variables have been added to 'environmentVariables' output"
             fi
+            echo "Environment variables have been added to 'environmentVariables' output"
         fi
+
+    - name: Decrypt cached .env file
+      if: steps.cache-envs.outputs.cache-hit == 'true'
+      shell: sh
+      run: |
+        # Decrypt cached .env file
+        gpg --decrypt --batch --yes --passphrase "${{ inputs.envEncryptionSecret }}" -o .env .env.gpg
+
+    - name: Set environmentVariables outputs on cache hit
+      if: steps.cache-envs.outputs.cache-hit == 'true'
+      id: get-envs-cached
+      shell: bash
+      run: |
+        # Set environmentVariables outputs on cache hit
+        set -euo pipefail
+
+        CONTENT_TYPES="${{ inputs.contentTypes }}"
+        ENV_VAR_SEP="${{ inputs.environmentVariableSeparator }}"
+
+        if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]]; then
+            if [[ "${ENV_VAR_SEP}" != " " ]]; then
+                ENVIRONMENT_VARIABLES=$(
+                  awk -v sep="$ENV_VAR_SEP" '
+                    NR==1 { printf "%s", $0; next }
+                    $0=="" { printf "\n"; next }
+                    { printf "%s%s", sep, $0 }
+                    END { printf "" }
+                  ' .env
+                )
+                echo 'environmentVariables<<EOF' >> "$GITHUB_OUTPUT"
+                printf '%s\n' "$ENVIRONMENT_VARIABLES" >> "$GITHUB_OUTPUT"
+                echo 'EOF' >> "$GITHUB_OUTPUT"
+            else
+                ENVIRONMENT_VARIABLES=$(cat .env)
+                echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
+            fi
+            echo "Environment variables have been added to 'environmentVariables' output"
+        fi
+
+    - name: Retrieve build arguments on cache hit
+      if: steps.cache-envs.outputs.cache-hit == 'true' && contains(inputs.contentTypes, 'BuildArg')
+      id: get-build-args-cached
+      shell: bash
+      run: |
+        # Retrieve build arguments on cache hit
+        set -euo pipefail
+
+        CONTENT_TYPE="BuildArg"
+        KEYVAULT_NAME="${{ steps.kv-name.outputs.keyVaultName }}"
+
+        # Set secrets list
+        echo "Retrieving list of build arguments for key vault: ${KEYVAULT_NAME}"
+        SECRETS=()
+        SECRET_LIST=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[?contentType && contains(contentType, '${CONTENT_TYPE}')].name" --output tsv)
+        while read -r SECRET; do
+            SECRETS+=("${SECRET}")
+        done <<< "${SECRET_LIST}"
+
+        # Remove duplicates
+        SECRET_LIST=()
+        for SECRET in "${SECRETS[@]}"; do
+          # shellcheck disable=SC2076
+          if ! [[ " ${SECRET_LIST[*]} " =~ " ${SECRET} " ]]; then
+            SECRET_LIST+=("${SECRET}")
+          fi
+        done
+        SECRETS=("${SECRET_LIST[@]}")
+        echo "Total build argument secrets found: ${#SECRETS[@]}"
+
+        BUILD_ARGUMENTS=""
+        echo "Retrieving build arguments for key vault: ${KEYVAULT_NAME}"
+        if echo "${SECRETS[*]}" | grep -E "\w" > /dev/null; then
+            for SECRET in "${SECRETS[@]}"; do
+                # Convert to upper case snake case and remove quotes
+                SECRET_NAME=$(echo "${SECRET}" | tr '[:lower:]-' '[:upper:]_' | tr "-" "_" | tr -d '"')
+
+                # Retrieve all properties of the secret
+                echo "Retrieving secret: ${SECRET_NAME}"
+
+                # Get secret value
+                SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "value")
+
+                # Mask secret value in logs
+                if [[ "$SECRET_NAME" =~ (SECRET|TOKEN|KEY|PASS|CONNECTION_STRING) ]]; then
+                    echo "::add-mask::$SECRET_VALUE"
+                fi
+
+                # Get secret content type
+                SECRET_CONTENT_TYPE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "contentType")
+
+                # Add secret
+                if [[ "${SECRET_CONTENT_TYPE}" == *"BuildArg"* ]]; then
+                    BUILD_ARGUMENTS="${BUILD_ARGUMENTS} ${{ inputs.buildArgPredicate }} ${SECRET_NAME}=${SECRET_VALUE}"
+                fi
+            done
+        fi
+
+        echo "Build arguments have been added to 'buildArguments' output"
+        echo "buildArguments=${BUILD_ARGUMENTS}" >> $GITHUB_OUTPUT
 
     - name: Source secrets file
       if: ${{ inputs.setBuildArguments != 'true' }}
-      shell: sh
+      shell: bash
       run: |
+        # Source secrets file
+        set -euo pipefail
+
         while read -r envVar; do
-            if [ $(echo "${envVar}" | grep -Ei "SECRET|TOKEN|KEY|PASS|CONNECTION_STRING") ]; then
-              VAR=$(echo "${envVar}" | awk -F '=' '{print $1}')
-              VALUE=$(echo $envVar | sed "s/$VAR=//g")
-              echo "::add-mask::$VALUE"
-            fi
             echo "$envVar" >> $GITHUB_ENV
         done < .env
 
+    - name: Encrypt .env file for caching
+      if: steps.cache-envs.outputs.cache-hit != 'true'
+      shell: sh
+      run: |
+        # Encrypt .env file for caching
+        gpg --symmetric --batch --yes --passphrase "${{ inputs.envEncryptionSecret }}" -o .env.gpg .env
+
 outputs:
   environmentVariables:
-    value: ${{ steps.get-envs.outputs.environmentVariables }}
+    value: ${{ steps.get-envs.outputs.environmentVariables || steps.get-envs-cached.outputs.environmentVariables }}
     description: "List of environment variables retrieved from key vault"
   buildArguments:
-    value: ${{ steps.get-envs.outputs.buildArguments }}
+    value: ${{ steps.get-envs.outputs.buildArguments || steps.get-build-args-cached.outputs.buildArguments }}
     description: "List of build arguments retrieved from key vault"
