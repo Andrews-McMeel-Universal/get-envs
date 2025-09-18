@@ -30,7 +30,7 @@ inputs:
   enableCaching:
     required: false
     description: "Enable caching of the .env file"
-    default: "true"
+    default: "false"
   envEncryptionSecret:
     required: false
     description: "Secret used to encrypt/decrypt the .env file"
