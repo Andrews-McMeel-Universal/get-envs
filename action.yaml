@@ -108,7 +108,7 @@ runs:
         set -euo pipefail
 
         CONTENT_TYPES="${{ inputs.contentTypes }}"
-        KEYVAULT_NAME="${{ steps.kv-name.outputs.keyVaultName }}"
+        KEYVAULT_NAME="${{ steps.kv-name.outputs.keyVaultName || inputs.environmentKeyVault }}"
 
         # Set secrets list
         echo "Retrieving list of secrets for key vault: ${KEYVAULT_NAME}"
