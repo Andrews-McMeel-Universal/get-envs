@@ -131,7 +131,10 @@ runs:
           fi
         done
         SECRETS=("${SECRET_LIST[@]}")
+        echo "Total secrets found: ${#SECRETS[@]}"
 
+        BUILD_ARGUMENTS=""
+        ENVIRONMENT_VARIABLES=""
         echo "Retrieving secrets for key vault: ${KEYVAULT_NAME}"
         if echo "${SECRETS[*]}" | grep -E "\w" > /dev/null; then
             for SECRET in "${SECRETS[@]}"; do
@@ -232,7 +235,9 @@ runs:
           fi
         done
         SECRETS=("${SECRET_LIST[@]}")
+        echo "Total build argument secrets found: ${#SECRETS[@]}"
 
+        BUILD_ARGUMENTS=""
         echo "Retrieving build arguments for key vault: ${KEYVAULT_NAME}"
         if echo "${SECRETS[*]}" | grep -E "\w" > /dev/null; then
             for SECRET in "${SECRETS[@]}"; do
