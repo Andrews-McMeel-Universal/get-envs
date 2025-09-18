@@ -193,9 +193,17 @@ runs:
         if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]]; then
             # Set environmentVariables output to a multi-line value in case of special characters or new lines
             if [[ "${ENV_VAR_SEP}" != " " ]]; then
-                echo 'environmentVariables<<EOF' >> $GITHUB_OUTPUT
-                echo "${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
-                echo 'EOF' >> $GITHUB_OUTPUT
+                ENVIRONMENT_VARIABLES=$(
+                  awk -v sep="$ENV_VAR_SEP" '
+                    NR==1 { printf "%s", $0; next }
+                    $0=="" { printf "\n"; next }
+                    { printf "%s%s", sep, $0 }
+                    END { printf "" }
+                  ' .env
+                )
+                echo 'environmentVariables<<EOF' >> "$GITHUB_OUTPUT"
+                printf '%s\n' "$ENVIRONMENT_VARIABLES" >> "$GITHUB_OUTPUT"
+                echo 'EOF' >> "$GITHUB_OUTPUT"
             else
                 echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
             fi
