@@ -62,6 +62,7 @@ runs:
       id: kv-name
       shell: bash
       run: |
+        # Retrieve key vault name
         set -euo pipefail
 
         REPOSITORY_NAME="${{ inputs.repositoryName }}"
@@ -82,6 +83,7 @@ runs:
       if: steps.cache-envs.outputs.cache-hit != 'true' || (steps.cache-envs.outputs.cache-hit == 'true' && contains(inputs.contentTypes, 'BuildArg'))
       shell: bash
       run: |
+        # Check if key vault exists
         set -euo pipefail
 
         KEYVAULT_NAME="${{ steps.kv-name.outputs.keyVaultName || inputs.environmentKeyVault }}"
@@ -102,6 +104,7 @@ runs:
       id: get-envs
       shell: bash
       run: |
+        # Pull secrets from Key Vault
         set -euo pipefail
 
         CONTENT_TYPES="${{ inputs.contentTypes }}"
@@ -173,13 +176,7 @@ runs:
             echo "buildArguments=${BUILD_ARGUMENTS}" >> $GITHUB_OUTPUT
         fi
         if [[ -z "${CONTENT_TYPES}" ]] || [[ "${CONTENT_TYPES}" == *"Env"* ]]; then
-            if [[ "${{ inputs.environmentVariableSeparator }}" != " " ]]; then
-                echo 'environmentVariables<<EOF' >> $GITHUB_OUTPUT
-                echo "${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
-                echo 'EOF' >> $GITHUB_OUTPUT
-            else
-                echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
-            fi
+            echo "environmentVariables=${ENVIRONMENT_VARIABLES}" >> $GITHUB_OUTPUT
             echo "Environment variables have been added to 'environmentVariables' output"
         fi
 
@@ -187,6 +184,7 @@ runs:
       if: steps.cache-envs.outputs.cache-hit == 'true'
       shell: sh
       run: |
+        # Decrypt cached .env file
         gpg --decrypt --batch --yes --passphrase "${{ inputs.envEncryptionSecret }}" -o .env .env.gpg
 
     - name: Set environmentVariables outputs on cache hit
@@ -194,6 +192,7 @@ runs:
       id: get-envs-cached
       shell: bash
       run: |
+        # Set environmentVariables outputs on cache hit
         set -euo pipefail
 
         CONTENT_TYPES="${{ inputs.contentTypes }}"
@@ -211,8 +210,10 @@ runs:
 
     - name: Retrieve build arguments on cache hit
       if: steps.cache-envs.outputs.cache-hit == 'true' && contains(inputs.contentTypes, 'BuildArg')
+      id: get-build-args-cached
       shell: bash
       run: |
+        # Retrieve build arguments on cache hit
         set -euo pipefail
 
         CONTENT_TYPE="BuildArg"
@@ -272,6 +273,7 @@ runs:
       if: ${{ inputs.setBuildArguments != 'true' }}
       shell: bash
       run: |
+        # Source secrets file
         set -euo pipefail
 
         while read -r envVar; do
@@ -282,6 +284,7 @@ runs:
       if: steps.cache-envs.outputs.cache-hit != 'true'
       shell: sh
       run: |
+        # Encrypt .env file for caching
         gpg --symmetric --batch --yes --passphrase "${{ inputs.envEncryptionSecret }}" -o .env.gpg .env
 
 outputs:
@@ -289,5 +292,5 @@ outputs:
     value: ${{ steps.get-envs.outputs.environmentVariables || steps.get-envs-cached.outputs.environmentVariables }}
     description: "List of environment variables retrieved from key vault"
   buildArguments:
-    value: ${{ steps.get-envs.outputs.buildArguments || steps.get-envs-cached.outputs.buildArguments }}
+    value: ${{ steps.get-envs.outputs.buildArguments || steps.get-build-args-cached.outputs.buildArguments }}
     description: "List of build arguments retrieved from key vault"
