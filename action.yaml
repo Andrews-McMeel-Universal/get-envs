@@ -115,12 +115,18 @@ runs:
         SECRETS=()
         if [[ -z "${CONTENT_TYPES}" ]]; then
             # shellcheck disable=SC2207
-            SECRETS=($(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[].name" --output tsv))
+            mapfile -t RAW_SECRETS < <(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[].name" --output tsv)
+            SECRETS=()
+            for SECRET in "${RAW_SECRETS[@]}"; do
+              CLEAN_SECRET=$(echo "${SECRET}" | tr -d '\r' | xargs)
+              SECRETS+=("${CLEAN_SECRET}")
+            done
         else
             for CONTENT_TYPE in ${CONTENT_TYPES}; do
                 SECRET_LIST=$(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[?contentType && contains(contentType, '${CONTENT_TYPE}')].name" --output tsv)
                 while read -r SECRET; do
-                    SECRETS+=("${SECRET}")
+                    CLEAN_SECRET=$(echo "${SECRET}" | tr -d '\r' | xargs)
+                    SECRETS+=("${CLEAN_SECRET}")
                 done <<< "${SECRET_LIST}"
             done
         fi
@@ -136,6 +142,7 @@ runs:
         SECRETS=("${SECRET_LIST[@]}")
         echo "Total secrets found: ${#SECRETS[@]}"
 
+        # Initialize variables
         BUILD_ARGUMENTS=""
         ENVIRONMENT_VARIABLES=""
         echo "Retrieving secrets for key vault: ${KEYVAULT_NAME}"
@@ -160,8 +167,14 @@ runs:
 
                 # Add secret
                 if [[ "${SECRET_CONTENT_TYPE}" == *"BuildArg"* ]]; then
-                    BUILD_ARGUMENTS="${BUILD_ARGUMENTS} ${{ inputs.buildArgPredicate }} ${SECRET_NAME}=${SECRET_VALUE}"
+                    if [[ -z "${BUILD_ARGUMENTS}" ]]; then
+                        BUILD_ARGUMENTS="${{ inputs.buildArgPredicate }} ${SECRET_NAME}=${SECRET_VALUE}"
+                    else
+                        BUILD_ARGUMENTS="${BUILD_ARGUMENTS} ${{ inputs.buildArgPredicate }} ${SECRET_NAME}=${SECRET_VALUE}"
+                    fi
                 fi
+
+                # Add secret to environment variables
                 if [[ "${SECRET_CONTENT_TYPE}" =~ "Env" ]]; then
                     ENVIRONMENT_VARIABLES+="${SECRET_NAME}=${SECRET_VALUE}${{ inputs.environmentVariableSeparator }}"
                     echo "${SECRET_NAME}=${SECRET_VALUE}" >> ".env"
