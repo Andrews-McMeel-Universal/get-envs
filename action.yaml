@@ -149,7 +149,7 @@ runs:
         if echo "${SECRETS[*]}" | grep -E "\w" > /dev/null; then
             for SECRET in "${SECRETS[@]}"; do
                 # Convert to upper case snake case and remove quotes
-                SECRET_NAME=$(echo "${SECRET}" | tr -d '"' | tr '[:lower:]' '[:upper:]')
+                SECRET_NAME=$(echo "${SECRET}" | tr -d '"' | tr '[:lower:]-' '[:upper:]_')
 
                 # Retrieve all properties of the secret
                 echo "Retrieving secret: ${SECRET_NAME}"
