@@ -74,7 +74,7 @@ runs:
             exit 1
         fi
 
-        if [[ -n "${KEYVAULT_NAME}" ]] && [[ "${KEYVAULT_NAME}" != "-${ENVIRONMENT}" ]]; then
+        if [[ "${KEYVAULT_NAME}" = "-${ENVIRONMENT}" ]]; then
             echo "::warning::The 'environmentKeyVault' input appears to be incorrectly set. If you intend to auto-discover the Key Vault based on tags, please leave this input blank. If you wish to specify a Key Vault name directly, please provide the correct name."
             echo "::warning::Defaulting to auto-discovery of Key Vault based on tags."
             echo "keyVaultName=" >> $GITHUB_OUTPUT
