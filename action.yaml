@@ -78,7 +78,8 @@ runs:
             echo "::warning::The 'environmentKeyVault' input appears to be incorrectly set. If you intend to auto-discover the Key Vault based on tags, please leave this input blank. If you wish to specify a Key Vault name directly, please provide the correct name."
             echo "::warning::Defaulting to auto-discovery of Key Vault based on tags."
             echo "keyVaultName=" >> $GITHUB_OUTPUT
-        else
+        elif [[ -n "${KEYVAULT_NAME}" ]] && [[ "${KEYVAULT_NAME}" != "" ]]; then
+            echo "The 'environmentKeyVault' input is provided. Auto-discovery of Key Vault based on tags will be skipped."
             echo "keyVaultName=${KEYVAULT_NAME}" >> $GITHUB_OUTPUT
         fi
 
