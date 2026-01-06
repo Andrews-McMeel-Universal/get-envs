@@ -57,8 +57,33 @@ runs:
       with:
         creds: "${{ inputs.azurecredentials }}"
 
-    - name: Retrieve key vault name
+    - name: Check key vault name input
       if: (!inputs.environmentKeyVault) && (steps.cache-envs.outputs.cache-hit != 'true' || (steps.cache-envs.outputs.cache-hit == 'true' && contains(inputs.contentTypes, 'BuildArg')))
+      id: check-kv-input
+      shell: bash
+      run: |
+        # Check key vault name input
+        set -euo pipefail
+
+        KEYVAULT_NAME="${{ inputs.environmentKeyVault }}"
+        ENVIRONMENT="${{ inputs.environment }}"
+
+        if [[ "${ENVIRONMENT}" == "" ]] && [[ "${KEYVAULT_NAME}" = "-${ENVIRONMENT}" ]]; then
+            echo "::warning::The 'environmentKeyVault' input appears to be incorrectly set. If you intend to auto-discover the Key Vault based on tags, please leave this input blank. If you wish to specify a Key Vault name directly, please provide the correct name."
+            echo "::error::Environment input is required when 'environmentKeyVault' is not provided."
+            exit 1
+        fi
+
+        if [[ -n "${KEYVAULT_NAME}" ]] && [[ "${KEYVAULT_NAME}" != "-${ENVIRONMENT}" ]]; then
+            echo "::warning::The 'environmentKeyVault' input appears to be incorrectly set. If you intend to auto-discover the Key Vault based on tags, please leave this input blank. If you wish to specify a Key Vault name directly, please provide the correct name."
+            echo "::warning::Defaulting to auto-discovery of Key Vault based on tags."
+            echo "keyVaultName=" >> $GITHUB_OUTPUT
+        else
+            echo "keyVaultName=${KEYVAULT_NAME}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Retrieve key vault name
+      if: (steps.check-kv-input.outputs.keyVaultName != '') && (steps.cache-envs.outputs.cache-hit != 'true' || (steps.cache-envs.outputs.cache-hit == 'true' && contains(inputs.contentTypes, 'BuildArg')))
       id: kv-name
       shell: bash
       run: |
