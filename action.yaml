@@ -184,7 +184,7 @@ runs:
                 SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "value")
 
                 # Mask secret value in logs
-                if [[ "$SECRET_NAME" =~ (SECRET|TOKEN|KEY|PASS|CONNECTION_STRING) ]]; then
+                if [[ "$SECRET_NAME" =~ (SECRET|TOKEN|KEY|PASS|CONSTR|AZUREBLOBSTORAGE|CONNECTIONSTRING|CONNECTION_STRING) ]]; then
                     echo "::add-mask::$SECRET_VALUE"
                 fi
 
@@ -318,7 +318,7 @@ runs:
                 SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "value")
 
                 # Mask secret value in logs
-                if [[ "$SECRET_NAME" =~ (SECRET|TOKEN|KEY|PASS|CONNECTION|CONSTR|AZUREBLOBSTORAGE) ]]; then
+                if [[ "$SECRET_NAME" =~ (SECRET|TOKEN|KEY|PASS|CONSTR|AZUREBLOBSTORAGE|CONNECTIONSTRING|CONNECTION_STRING) ]]; then
                     echo "::add-mask::$SECRET_VALUE"
                 fi
 
