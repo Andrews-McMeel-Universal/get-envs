@@ -84,7 +84,7 @@ runs:
         fi
 
     - name: Retrieve key vault name
-      if: (steps.check-kv-input.outputs.keyVaultName != '') && (steps.cache-envs.outputs.cache-hit != 'true' || (steps.cache-envs.outputs.cache-hit == 'true' && contains(inputs.contentTypes, 'BuildArg')))
+      if: (steps.check-kv-input.outputs.keyVaultName = '') && (steps.cache-envs.outputs.cache-hit != 'true' || (steps.cache-envs.outputs.cache-hit == 'true' && contains(inputs.contentTypes, 'BuildArg')))
       id: kv-name
       shell: bash
       run: |
