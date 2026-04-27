@@ -158,7 +158,13 @@ runs:
             for SECRET in "${SECRETS[@]}"; do
                 # Convert to upper case snake case and remove quotes
                 SECRET_NAME=$(echo "${SECRET}" | tr -d '"' | tr '[:lower:]-' '[:upper:]_')
-                
+
+                # Retrieve all properties of the secret
+                echo "Retrieving secret: ${SECRET_NAME}"
+
+                # Get secret value
+                SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "value")
+
                 # Mask secret value in logs
                 if [[ "$SECRET_NAME" =~ (SECRET|TOKEN|KEY|PASS|CONSTR|AZUREBLOBSTORAGE|CONNECTIONSTRING|CONNECTION_STRING) ]]; then
                     echo "::add-mask::$SECRET_VALUE"
