@@ -156,6 +156,9 @@ runs:
         echo "Retrieving secrets for key vault: ${KEYVAULT_NAME}"
         if echo "${SECRETS[*]}" | grep -E "\w" > /dev/null; then
             for SECRET in "${SECRETS[@]}"; do
+                # Convert to upper case snake case and remove quotes
+                SECRET_NAME=$(echo "${SECRET}" | tr -d '"' | tr '[:lower:]-' '[:upper:]_')
+                
                 # Mask secret value in logs
                 if [[ "$SECRET_NAME" =~ (SECRET|TOKEN|KEY|PASS|CONSTR|AZUREBLOBSTORAGE|CONNECTIONSTRING|CONNECTION_STRING) ]]; then
                     echo "::add-mask::$SECRET_VALUE"
