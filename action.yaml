@@ -125,6 +125,44 @@ runs:
             exit 1
         fi
 
+    - name: Mask confidential secrets
+      shell: bash
+      run: |
+        # Retrieve build arguments on cache hit
+        set -euo pipefail
+
+        KEYVAULT_NAME="${{ steps.kv-name.outputs.keyVaultName }}"
+
+        # Set secrets list
+        # shellcheck disable=SC2207
+        mapfile -t RAW_SECRETS < <(az keyvault secret list --vault-name "${KEYVAULT_NAME}" --query "[].name" --output tsv)
+        SECRETS=()
+        for SECRET in "${RAW_SECRETS[@]}"; do
+          CLEAN_SECRET=$(echo "${SECRET}" | tr -d '\r' | xargs)
+          SECRETS+=("${CLEAN_SECRET}")
+        done
+
+        # Remove duplicates
+        SECRET_LIST=()
+        for SECRET in "${SECRETS[@]}"; do
+          # shellcheck disable=SC2076
+          if ! [[ " ${SECRET_LIST[*]} " =~ " ${SECRET} " ]]; then
+            SECRET_LIST+=("${SECRET}")
+          fi
+        done
+        SECRETS=("${SECRET_LIST[@]}")
+        echo "Total secrets found: ${#SECRETS[@]}"
+
+        echo "Retrieving secrets for key vault: ${KEYVAULT_NAME}"
+        if echo "${SECRETS[*]}" | grep -E "\w" > /dev/null; then
+            for SECRET in "${SECRETS[@]}"; do
+                # Mask secret value in logs
+                if [[ "$SECRET_NAME" =~ (SECRET|TOKEN|KEY|PASS|CONSTR|AZUREBLOBSTORAGE|CONNECTIONSTRING|CONNECTION_STRING) ]]; then
+                    echo "::add-mask::$SECRET_VALUE"
+                fi
+            done
+        fi
+
     - name: Pull secrets from Key Vault
       if: steps.cache-envs.outputs.cache-hit != 'true'
       id: get-envs
@@ -182,11 +220,6 @@ runs:
 
                 # Get secret value
                 SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "value")
-
-                # Mask secret value in logs
-                if [[ "$SECRET_NAME" =~ (SECRET|TOKEN|KEY|PASS|CONSTR|AZUREBLOBSTORAGE|CONNECTIONSTRING|CONNECTION_STRING) ]]; then
-                    echo "::add-mask::$SECRET_VALUE"
-                fi
 
                 # Get secret content type
                 SECRET_CONTENT_TYPE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "contentType")
@@ -316,11 +349,6 @@ runs:
 
                 # Get secret value
                 SECRET_VALUE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "value")
-
-                # Mask secret value in logs
-                if [[ "$SECRET_NAME" =~ (SECRET|TOKEN|KEY|PASS|CONSTR|AZUREBLOBSTORAGE|CONNECTIONSTRING|CONNECTION_STRING) ]]; then
-                    echo "::add-mask::$SECRET_VALUE"
-                fi
 
                 # Get secret content type
                 SECRET_CONTENT_TYPE=$(az keyvault secret show --vault-name "${KEYVAULT_NAME}" -n "${SECRET}" --output tsv --query "contentType")
